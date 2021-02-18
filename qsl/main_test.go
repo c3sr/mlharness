@@ -1,11 +1,11 @@
-package sut
+package qsl
 
 import (
 	"os"
 	"testing"
 
 	"github.com/c3sr/config"
-  _ "github.com/c3sr/tracer/jaeger"
+	_ "github.com/c3sr/tracer/jaeger"
 )
 
 func TestMain(m *testing.M) {

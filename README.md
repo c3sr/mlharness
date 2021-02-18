@@ -12,7 +12,7 @@ TODO
     - [ ] flush query
     - [ ] report latency
 - [ ] QSL
-  - [ ] Initialization
+  - [x] Initialization
   - [ ] ConstructQSL
     - [ ] total_sample_count
     - [ ] performance_sample_count

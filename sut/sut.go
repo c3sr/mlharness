@@ -36,7 +36,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 	initSUTSpan, ctx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
-		"initialize_sut",
+		"new_sut",
 	)
 	if initSUTSpan == nil {
 		panic("invalid span")
@@ -53,7 +53,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 
 	frameworkRegister()
 
-	fmt.Printf("Use %s as backend.\n\n", framework.MustCanonicalName())
+	fmt.Printf("Use %s as backend.\n", framework.MustCanonicalName())
 
 	if modelVersion == "" {
 		fmt.Printf("Model version is empty, default to 1.0 ...\n")
@@ -66,7 +66,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 		return nil, err
 	}
 
-	fmt.Printf("Found %s.\n\n", modelName+":"+modelVersion)
+	fmt.Printf("Found %s.\n", modelName+":"+modelVersion)
 
 	// Use the same method in c3sr/dlframework to get predictors
 	predictors, err := agent.GetPredictors(framework)
@@ -129,7 +129,13 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 		return nil, err
 	}
 
+  fmt.Printf("Successfully initialized SUT with backend/model = %s.\n\n", model.MustCanonicalName())
+
 	return &SUT{
 		predictor: predictor,
 	}, nil
+}
+
+func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
+  return s.predictor.GetPreprocessOptions()
 }
