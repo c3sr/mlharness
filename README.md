@@ -6,7 +6,7 @@ TODO
 - [ ] Python - Go bindings
   - [ ] ... 
 - [ ] SUT
-  - [ ] Initialization
+  - [x] Initialization
   - [ ] ConstructSUT
     - [ ] issue query
     - [ ] flush query

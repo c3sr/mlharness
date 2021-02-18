@@ -146,6 +146,13 @@
   name = "gonum.org/v1/gonum"
   version = "=0.6.0"
 
+[[override]]
+  name = "github.com/hashicorp/go-cleanhttp"
+  version = "=0.5.1"
+
+[[override]]
+  name = "github.com/stretchr/testify"
+  version = "=1.6.1"
+
 [prune]
   go-tests = true
-  unused-packages = true
