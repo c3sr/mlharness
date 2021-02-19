@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/c3sr/config"
-  _ "github.com/c3sr/tracer/jaeger"
+	_ "github.com/c3sr/tracer/jaeger"
 )
 
 func TestMain(m *testing.M) {

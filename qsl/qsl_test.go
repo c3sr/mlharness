@@ -7,11 +7,10 @@ import (
 	"testing"
 
 	"github.com/c3sr/mlcommons-mlmodelscope/sut"
-	"github.com/c3sr/tracer"
 )
 
 func TestQSL(t *testing.T) {
-	sut, err := sut.NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, tracer.FULL_TRACE)
+	sut, err := sut.NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE")
 	if err != nil {
 		t.Error(err)
 	}
@@ -22,7 +21,7 @@ func TestQSL(t *testing.T) {
 	}
 
 	path, _ := os.Getwd()
-	path = filepath.Join(path, "dataset/_fixture/fake_imagenet")
+	path = filepath.Join(path, "dataset/_fixtures/fake_imagenet")
 
 	qsl, err := NewQSL(context.Background(), "imagenet", path, "", 5, opt)
 	if err != nil {

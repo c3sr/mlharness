@@ -3,15 +3,23 @@ package sut
 import (
 	"context"
 	"fmt"
+	"os"
 
 	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/dlframework/framework/agent"
 	"github.com/c3sr/dlframework/framework/options"
 	common "github.com/c3sr/dlframework/framework/predictor"
+	"github.com/c3sr/mxnet"
+	_ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
+	"github.com/c3sr/onnxruntime"
+	_ "github.com/c3sr/onnxruntime/predictor"
 	"github.com/c3sr/pytorch"
 	_ "github.com/c3sr/pytorch/predictor"
+	"github.com/c3sr/tensorflow"
+	_ "github.com/c3sr/tensorflow/predictor"
 	"github.com/c3sr/tracer"
+	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -26,12 +34,15 @@ type backend struct {
 
 var (
 	supportedBackend = map[string]backend{
-		"pytorch": {pytorch.Register, pytorch.FrameworkManifest},
+		"pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
+		"onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
+		"tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
+		"mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
 )
 
 // NewSUT ...
-func NewSUT(ctx context.Context, backendName string, modelName string, modelVersion string, useGPU bool, traceLevel tracer.Level) (*SUT, error) {
+func NewSUT(ctx context.Context, backendName string, modelName string, modelVersion string, useGPU bool, traceLevel string) (*SUT, error) {
 
 	initSUTSpan, ctx := tracer.StartSpanFromContext(
 		ctx,
@@ -111,7 +122,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 	}
 	execOpts := &dl.ExecutionOptions{
 		TraceLevel: dl.ExecutionOptions_TraceLevel(
-			dl.ExecutionOptions_TraceLevel_value[traceLevel.String()],
+			dl.ExecutionOptions_TraceLevel_value[traceLevel],
 		),
 		DeviceCount: dc,
 	}
@@ -129,7 +140,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 		return nil, err
 	}
 
-  fmt.Printf("Successfully initialized SUT with backend/model = %s.\n\n", model.MustCanonicalName())
+	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n\n", model.MustCanonicalName())
 
 	return &SUT{
 		predictor: predictor,
@@ -137,5 +148,40 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 }
 
 func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
-  return s.predictor.GetPreprocessOptions()
+	return s.predictor.GetPreprocessOptions()
+}
+
+func (s *SUT) Close() {
+	s.predictor.Close()
+}
+
+func InfoModels(backendName string) error {
+	// get backend
+	value, ok := supportedBackend[backendName]
+	if !ok {
+		return fmt.Errorf("The backend %s is not supported.", backendName)
+	}
+
+	frameworkRegister, framework := value.frameworkRegisterFunc, value.frameworkManifest
+
+	frameworkRegister()
+
+	models := framework.Models()
+	if len(models) == 0 {
+		fmt.Println("No Models")
+		return nil
+	}
+
+	tbl := tablewriter.NewWriter(os.Stdout)
+	tbl.SetHeader([]string{"Name", "Version", "Cannonical Name"})
+	for _, model := range models {
+		tbl.Append([]string{
+			model.Name,
+			model.Version,
+			model.MustCanonicalName(),
+		})
+	}
+	tbl.Render()
+
+	return nil
 }

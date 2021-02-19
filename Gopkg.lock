@@ -71,6 +71,21 @@
   version = "v0.3.6"
 
 [[projects]]
+  digest = "1:038d5814d16e7448ccb942ea108977ea11ef55ba81fd9490a6a75f1f53b7ceab"
+  name = "github.com/awalterschulze/gographviz"
+  packages = [
+    ".",
+    "ast",
+    "internal/errors",
+    "internal/lexer",
+    "internal/parser",
+    "internal/token",
+  ]
+  pruneopts = "T"
+  revision = "61ac52a9250b6e88baaaf72e0f4f424418b823a0"
+  version = "v2.0.3"
+
+[[projects]]
   digest = "1:00b04bfa2d573378aa52ec3e304596a22df2e3a3cc021ff991a1cd07b832e1b9"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -244,6 +259,22 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:1bacb9e227012f11b70d61fa59548e6967c978220e62772f2911ca629da385bc"
+  name = "github.com/c3sr/go-mxnet"
+  packages = ["mxnet"]
+  pruneopts = "T"
+  revision = "8917072185c305d860317bdff6eeb864bc1a6299"
+  version = "v0.4.1"
+
+[[projects]]
+  digest = "1:443d7c402dcbb96db787725d28dee6348a9c2cabb46f72788829b74b57cea1d5"
+  name = "github.com/c3sr/go-onnxruntime"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "a2dbdd6311411ecd1bfa3ef87ec57b03f53cf113"
+  version = "v0.0.3"
+
+[[projects]]
   digest = "1:f3f36f37b23f429801a8f5dabfdea42e3a077adad63be44c1a37c234180bf300"
   name = "github.com/c3sr/go-pytorch"
   packages = ["."]
@@ -322,6 +353,17 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:0e3a8f4c72e942148c5c64e063420dcae8c6fa38448221cb49ff1a2a03d37eb0"
+  name = "github.com/c3sr/mxnet"
+  packages = [
+    ".",
+    "predictor",
+  ]
+  pruneopts = "T"
+  revision = "f7822d0b2a0e73ad41debefd028cb008532b396f"
+  version = "v0.3.5"
+
+[[projects]]
   digest = "1:45ef8aa7f4ffe6e2b34ef153dec41747eb2d105fbda693cc02853c1865dbea1c"
   name = "github.com/c3sr/nvidia-smi"
   packages = ["."]
@@ -336,6 +378,17 @@
   pruneopts = "T"
   revision = "1727b8458e25f8a7d41981dca1760fb2ddc8618a"
   version = "v0.1.0"
+
+[[projects]]
+  digest = "1:6314027c2cc65363d668ca1ca461dc9d248a199c8390ba6df86ef3237486edf6"
+  name = "github.com/c3sr/onnxruntime"
+  packages = [
+    ".",
+    "predictor",
+  ]
+  pruneopts = "T"
+  revision = "19dd4ae5c4f031046985154bc619f0aeaaa1a9d0"
+  version = "v0.0.7"
 
 [[projects]]
   digest = "1:b0b3436cfe60efde32d6b187ec7c9c4c3e401590d6b264eb640df287441114dd"
@@ -386,10 +439,23 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:77c66efe94674ca62d794a59c5e1962ddc962b66ae8b20e6c8a77b4176242094"
+  name = "github.com/c3sr/tensorflow"
+  packages = [
+    ".",
+    "graph",
+    "predictor",
+  ]
+  pruneopts = "T"
+  revision = "a343dda5a3edefb578ff102a44c85f645f3d3c0a"
+  version = "v0.3.6"
+
+[[projects]]
   digest = "1:727edacac8c181a27f409a3a73d166b2ffaae6b64e85555d9da90c27c7f4ba61"
   name = "github.com/c3sr/tracer"
   packages = [
     ".",
+    "chrome",
     "defaults",
     "jaeger",
     "middleware/grpc",
@@ -528,6 +594,14 @@
   pruneopts = "T"
   revision = "bc2269661d49c6c9d0e514eef49710556883f3fa"
   version = "v1.10.0"
+
+[[projects]]
+  digest = "1:36082e0feb7257879dcc96137b12e3e185c77b46d6a9f7943bbf8178a4d4ac55"
+  name = "github.com/fatih/set"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "2c768e3c5489976167bfc42b5c7c92ca783f4389"
+  version = "v0.2.1"
 
 [[projects]]
   digest = "1:af43bdaaf86655a2343f113e9b293bbc16b12099eaeb223982bbe4d4c22ba14d"
@@ -942,6 +1016,14 @@
   version = "v0.0.12"
 
 [[projects]]
+  digest = "1:c8444b201342f9dcfbadb3df96d02a69d0d7d708f78d09adfb5b8bd9ef6f9a4a"
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "59616a248b91ae20bf3eb93636a24c87d9ce6cea"
+  version = "v0.0.10"
+
+[[projects]]
   digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
@@ -996,6 +1078,14 @@
   packages = ["."]
   pruneopts = "T"
   revision = "a667d8f6e278892ccc3bc78f7fc6a6364fd68124"
+
+[[projects]]
+  digest = "1:b4d00f6fdb934aebc8b47a3062fb27e011513f0106ebeb5388a5ca2cbb61d961"
+  name = "github.com/olekukonko/tablewriter"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "c7d2a8a09b076b70918308a3cd95464b2ae3b5d8"
+  version = "v0.0.5"
 
 [[projects]]
   digest = "1:840280e0f5988a3cffaba701990d50e6c0202466ac2a1642424485153328d413"
@@ -1072,6 +1162,14 @@
   packages = ["."]
   pruneopts = "T"
   revision = "1b01514224a1a60a6bcbb0b6b9d3a00ec14ae17f"
+
+[[projects]]
+  digest = "1:034d31b31cdbbba45de1a14367c75ce3195d7ae908514b8d6142d1525c41955b"
+  name = "github.com/rivo/uniseg"
+  packages = ["."]
+  pruneopts = "T"
+  revision = "75711fccf6a3e85bc74c241e2dddd06a9bc9e53d"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:6de1f407122a58aa839778f274f8669261110e35a660c600901d5b80854cd580"
@@ -1164,6 +1262,17 @@
   pruneopts = "T"
   revision = "2ef7124db659d49edac6aa459693a15ae36c671a"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:1cee3dd983164097564f357f5cb6b8fa84aad6aad530a6328e177818f481e3bf"
+  name = "github.com/tensorflow/tensorflow"
+  packages = [
+    "tensorflow/go",
+    "tensorflow/go/op",
+  ]
+  pruneopts = "T"
+  revision = "87989f69597d6b2d60de8f112e1e3cea23be7298"
+  version = "v1.14.0"
 
 [[projects]]
   digest = "1:eab57d922c38d5f547c88ce8c57910da37875375465aade053e51d0d5af7f5d7"
@@ -1554,6 +1663,15 @@
     "blas/cblas128",
     "blas/gonum",
     "floats",
+    "graph",
+    "graph/internal/linear",
+    "graph/internal/ordered",
+    "graph/internal/set",
+    "graph/internal/uid",
+    "graph/iterator",
+    "graph/simple",
+    "graph/topo",
+    "graph/traverse",
     "internal/asm/c128",
     "internal/asm/c64",
     "internal/asm/f32",
@@ -1822,15 +1940,22 @@
     "github.com/c3sr/dlframework/framework/predictor",
     "github.com/c3sr/dlframework/steps",
     "github.com/c3sr/logger",
+    "github.com/c3sr/mxnet",
+    "github.com/c3sr/mxnet/predictor",
     "github.com/c3sr/nvidia-smi",
+    "github.com/c3sr/onnxruntime",
+    "github.com/c3sr/onnxruntime/predictor",
     "github.com/c3sr/pipeline",
     "github.com/c3sr/pytorch",
     "github.com/c3sr/pytorch/predictor",
+    "github.com/c3sr/tensorflow",
+    "github.com/c3sr/tensorflow/predictor",
     "github.com/c3sr/tracer",
     "github.com/c3sr/tracer/jaeger",
+    "github.com/olekukonko/tablewriter",
+    "github.com/opentracing/opentracing-go",
     "github.com/pkg/errors",
     "github.com/sirupsen/logrus",
-    "gorgonia.org/tensor",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
