@@ -105,7 +105,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 			return nil, errors.New("not gpu found")
 		}
 		dc = map[string]int32{"GPU": 0}
-		log.WithField("gpu = ", nvidiasmi.Info.GPUS[0].ProductName).Info("Running evalaution on GPU")
+		log.WithField("gpu = ", nvidiasmi.Info.GPUS[0].ProductName).Info("Running evaluation on GPU")
 	} else {
 		dc = map[string]int32{"CPU": 0}
 	}

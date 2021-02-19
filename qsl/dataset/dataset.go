@@ -1,8 +1,8 @@
 package dataset
 
 type Dataset interface {
-	// LoadQuerySamples([]int)
-	// UnloadQuertSamples([]int)
-	// GetSamples([]int) interface{}
-	// GetItemCounts()
+	LoadQuerySamples([]int) error
+	UnloadQuerySamples([]int) error
+	GetSamples([]int) ([]interface{}, []interface{}, error)
+	GetItemCount() int
 }

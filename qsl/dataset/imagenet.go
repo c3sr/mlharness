@@ -17,19 +17,25 @@ import (
 )
 
 type ImageNet struct {
-	data   []interface{}
-	labels []int
+	labels            []int
+	names             []string
+	dataPath          string
+	dataInMemory      map[int]interface{}
+	preprocessOptions common.PreprocessOptions
 }
 
 var (
 	defaultChannelBuffer = 100000
 )
 
-func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (Dataset, error) {
+func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*ImageNet, error) {
 
 	start := time.Now()
 
-	res := &ImageNet{}
+	res := &ImageNet{
+		dataPath:          dataPath,
+		preprocessOptions: preprocessOptions,
+	}
 
 	if imageList == "" {
 		imageList = filepath.Join(dataPath, "val_map.txt")
@@ -42,13 +48,6 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 	scanner := bufio.NewScanner(file)
 
 	notFound := 0
-
-  input := make(chan interface{}, defaultChannelBuffer)
-  opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
-  output := pipeline.New(opts...).
-    Then(steps.NewReadImage(preprocessOptions)).
-    Then(steps.NewPreprocessImage(preprocessOptions)).
-    Run(input)
 
 	for scanner.Scan() {
 		val := strings.Split(scanner.Text(), " ")
@@ -64,19 +63,12 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 			continue
 		}
 
-		// preprocess image
-		imageBytes, err := ioutil.ReadFile(src)
-		if err != nil {
-			return nil, fmt.Errorf("Cannot read %s", src)
-		}
-
-		input <- bytes.NewBuffer(imageBytes)
-
 		labelInt, err := strconv.Atoi(label)
 		if err != nil {
 			return nil, fmt.Errorf("Can't convert %s into an interger.", label)
 		}
 
+		res.names = append(res.names, imageName)
 		res.labels = append(res.labels, labelInt)
 
 		if count != 0 && len(res.labels) == count {
@@ -84,22 +76,80 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 		}
 	}
 
-  close(input)
-  for out := range output {
-    res.data = append(res.data, out)
-  }
-
 	elapsed := time.Now().Sub(start)
 
-	if len(res.data) == 0 {
+	if len(res.labels) == 0 {
 		return nil, fmt.Errorf("no images in image list found.")
 	}
 	if notFound > 0 {
 		fmt.Printf("reduced image list, %d images not found", notFound)
 	}
 
-	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.data), elapsed.Seconds())
+	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
 
 	return res, nil
 
+}
+
+func (i *ImageNet) LoadQuerySamples(sampleList []int) error {
+	i.dataInMemory = make(map[int]interface{})
+
+	input := make(chan interface{}, defaultChannelBuffer)
+	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
+	output := pipeline.New(opts...).
+		Then(steps.NewReadImage(i.preprocessOptions)).
+		Then(steps.NewPreprocessImage(i.preprocessOptions)).
+		Run(input)
+
+	for _, sample := range sampleList {
+		imageBytes, err := ioutil.ReadFile(i.getItemLocation(sample))
+		if err != nil {
+			return fmt.Errorf("Cannot read %s", i.getItemLocation(sample))
+		}
+
+		input <- bytes.NewBuffer(imageBytes)
+	}
+
+	close(input)
+
+	for _, sample := range sampleList {
+		i.dataInMemory[sample] = <-output
+	}
+	return nil
+}
+
+func (i *ImageNet) UnloadQuerySamples(sampleList []int) error {
+	if i.dataInMemory == nil {
+		return fmt.Errorf("Data map is nil.")
+	}
+	if len(sampleList) == 0 {
+		i.dataInMemory = nil
+	} else {
+		for _, sample := range sampleList {
+			delete(i.dataInMemory, sample)
+		}
+	}
+	return nil
+}
+
+func (i *ImageNet) GetItemCount() int {
+	return len(i.labels)
+}
+
+func (i *ImageNet) GetSamples(sampleList []int) ([]interface{}, []interface{}, error) {
+	data := make([]interface{}, len(sampleList))
+	label := make([]interface{}, len(sampleList))
+	for ii, sample := range sampleList {
+		if val, ok := i.dataInMemory[sample]; ok {
+			data[ii] = val
+			label[ii] = i.labels[sample]
+		} else {
+			return nil, nil, fmt.Errorf("sample id %d not loaded.", sample)
+		}
+	}
+	return data, label, nil
+}
+
+func (i *ImageNet) getItemLocation(sample int) string {
+	return filepath.Join(i.dataPath, i.names[sample])
 }

@@ -13,6 +13,8 @@ TODO
     - [ ] report latency
 - [ ] QSL
   - [x] Initialization
+    - [x] ImageNet
+    - [ ] COCO
   - [ ] ConstructQSL
     - [ ] total_sample_count
     - [ ] performance_sample_count
