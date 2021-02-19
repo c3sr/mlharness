@@ -9,11 +9,13 @@ import (
 	"github.com/c3sr/dlframework/framework/agent"
 	"github.com/c3sr/dlframework/framework/options"
 	common "github.com/c3sr/dlframework/framework/predictor"
+	"github.com/c3sr/dlframework/steps"
 	"github.com/c3sr/mxnet"
 	_ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
 	"github.com/c3sr/onnxruntime"
 	_ "github.com/c3sr/onnxruntime/predictor"
+	"github.com/c3sr/pipeline"
 	"github.com/c3sr/pytorch"
 	_ "github.com/c3sr/pytorch/predictor"
 	"github.com/c3sr/tensorflow"
@@ -39,6 +41,7 @@ var (
 		"tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
 		"mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
+	defaultChannelBuffer = 100000
 )
 
 // NewSUT ...
@@ -140,7 +143,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 		return nil, err
 	}
 
-	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n\n", model.MustCanonicalName())
+	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n", model.MustCanonicalName())
 
 	return &SUT{
 		predictor: predictor,
@@ -184,4 +187,34 @@ func InfoModels(backendName string) error {
 	tbl.Render()
 
 	return nil
+}
+
+func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Features, error) {
+	input := make(chan interface{}, defaultChannelBuffer)
+
+	go func() {
+		defer close(input)
+		for _, d := range data {
+			input <- []interface{}{d}
+		}
+	}()
+
+	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
+		Then(steps.NewPredict(s.predictor)).
+		Run(input)
+
+	res := make([]dl.Features, len(data))
+
+	for ii, _ := range data {
+		out0 := <-output
+
+		out, ok := out0.(steps.IDer)
+		if !ok {
+			return nil, fmt.Errorf("expecting steps.IDer, but got %v", out0)
+		}
+
+		res[ii] = out.GetData().(dl.Features)
+	}
+
+	return res, nil
 }

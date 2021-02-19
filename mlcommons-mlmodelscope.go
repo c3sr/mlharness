@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl/dataset"
 	"github.com/c3sr/mlcommons-mlmodelscope/sut"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	mlmodelscopeSUT sut.SUT
+	mlmodelscopeSUT *sut.SUT
 	mlmodelscopeQSL dataset.Dataset
 	rootSpan        opentracing.Span
 	ctx             context.Context
@@ -22,6 +23,9 @@ var (
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
 	datasetName string, imageList string, count int, useGPU bool, traceLevel string) error {
+
+	var err error
+
 	rootSpan, ctx = tracer.StartSpanFromContext(
 		context.Background(),
 		tracer.APPLICATION_TRACE,
@@ -33,7 +37,7 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	fmt.Println("Start initializing SUT...")
 
-	mlmodelscopeSUT, err := sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel)
+	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel)
 	if err != nil {
 		return err
 	}
@@ -59,13 +63,42 @@ func Initialize(backendName string, modelName string, modelVersion string,
 	return nil
 }
 
-// This needs to be call once from the python side in the end
-func Finalize() error {
-	mlmodelscopeSUT.Close()
-	rootSpan.Finish()
-	return nil
+// TODO: What do we want to return to python?
+func IssueQuery(sampleList []int) ([]dl.Features, error) {
+	issueSpan, issueCtx := tracer.StartSpanFromContext(
+		ctx,
+		tracer.APPLICATION_TRACE,
+		"IssueQuery Span",
+	)
+	if issueSpan == nil {
+		panic("invalid issue query span")
+	}
+	defer issueSpan.Finish()
+
+	data, _, err := mlmodelscopeQSL.GetSamples(sampleList)
+	if err != nil {
+		return nil, err
+	}
+
+	return mlmodelscopeSUT.ProcessQuery(issueCtx, data)
+}
+
+func LoadQuerySamples(sampleList []int) error {
+	return mlmodelscopeQSL.LoadQuerySamples(sampleList)
+}
+
+func UnloadQuerySamples(sampleList []int) error {
+	return mlmodelscopeQSL.UnloadQuerySamples(sampleList)
 }
 
 func InfoModels(backendName string) error {
 	return sut.InfoModels(backendName)
+}
+
+// This needs to be call once from the python side in the end
+func Finalize() error {
+	mlmodelscopeSUT.Close()
+	rootSpan.Finish()
+	tracer.Close()
+	return nil
 }
