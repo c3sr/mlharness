@@ -23,11 +23,8 @@ func NewQSL(ctx context.Context, datasetName string, dataPath string, imageList 
 	switch datasetName {
 	case "imagenet":
 		return dataset.NewImageNet(dataPath, imageList, count, preprocessOptions)
-		// case "coco":
-		//   return &QSL{
-		//     Dataset: dataset.NewCoco(preprocessOptions),
-		//   }, nil
-
+	case "coco":
+		return dataset.NewCoco(dataPath, imageList, count, preprocessOptions)
 	}
 
 	return nil, fmt.Errorf("%s dataset is not implemented", datasetName)

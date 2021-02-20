@@ -24,10 +24,6 @@ type ImageNet struct {
 	preprocessOptions common.PreprocessOptions
 }
 
-var (
-	defaultChannelBuffer = 100000
-)
-
 func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*ImageNet, error) {
 
 	start := time.Now()
@@ -82,7 +78,7 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 		return nil, fmt.Errorf("no images in image list found.")
 	}
 	if notFound > 0 {
-		fmt.Printf("reduced image list, %d images not found", notFound)
+		fmt.Printf("reduced image list, %d images not found.\n", notFound)
 	}
 
 	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
@@ -136,18 +132,16 @@ func (i *ImageNet) GetItemCount() int {
 	return len(i.labels)
 }
 
-func (i *ImageNet) GetSamples(sampleList []int) ([]interface{}, []interface{}, error) {
+func (i *ImageNet) GetSamples(sampleList []int) ([]interface{}, error) {
 	data := make([]interface{}, len(sampleList))
-	label := make([]interface{}, len(sampleList))
 	for ii, sample := range sampleList {
 		if val, ok := i.dataInMemory[sample]; ok {
 			data[ii] = val
-			label[ii] = i.labels[sample]
 		} else {
-			return nil, nil, fmt.Errorf("sample id %d not loaded.", sample)
+			return nil, fmt.Errorf("sample id %d not loaded.", sample)
 		}
 	}
-	return data, label, nil
+	return data, nil
 }
 
 func (i *ImageNet) getItemLocation(sample int) string {

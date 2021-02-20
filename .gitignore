@@ -1,3 +1,7 @@
 vendor/
+qsl/dataset/_fixtures
 
+
+# we might want to modify the backend to delete these
 profile.trace
+**/onnxruntime*.json

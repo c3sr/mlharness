@@ -14,7 +14,7 @@ TODO
 - [ ] QSL
   - [x] Initialization
     - [x] ImageNet
-    - [ ] COCO
+    - [x] COCO
   - [ ] ConstructQSL
     - [ ] total_sample_count
     - [ ] performance_sample_count

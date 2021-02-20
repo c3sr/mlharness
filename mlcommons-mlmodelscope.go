@@ -63,6 +63,42 @@ func Initialize(backendName string, modelName string, modelVersion string,
 	return nil
 }
 
+func Warmup() error {
+	wamupSpan, issueCtx := tracer.StartSpanFromContext(
+		ctx,
+		tracer.APPLICATION_TRACE,
+		"Warmup Span",
+	)
+	if wamupSpan == nil {
+		panic("invalid issue query span")
+	}
+	defer wamupSpan.Finish()
+
+	fmt.Println("Start warmup...")
+
+	if err := LoadQuerySamples([]int{0}); err != nil {
+		return err
+	}
+
+	data, err := mlmodelscopeQSL.GetSamples([]int{0})
+	if err != nil {
+		return err
+	}
+
+	for ii := 0; ii < 5; ii++ {
+		if _, err := mlmodelscopeSUT.ProcessQuery(issueCtx, data); err != nil {
+			return err
+		}
+	}
+
+	if err := UnloadQuerySamples([]int{}); err != nil {
+		return err
+	}
+
+	fmt.Println("Finish warmup...")
+	return nil
+}
+
 // TODO: What do we want to return to python?
 func IssueQuery(sampleList []int) ([]dl.Features, error) {
 	issueSpan, issueCtx := tracer.StartSpanFromContext(
@@ -75,7 +111,7 @@ func IssueQuery(sampleList []int) ([]dl.Features, error) {
 	}
 	defer issueSpan.Finish()
 
-	data, _, err := mlmodelscopeQSL.GetSamples(sampleList)
+	data, err := mlmodelscopeQSL.GetSamples(sampleList)
 	if err != nil {
 		return nil, err
 	}
