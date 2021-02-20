@@ -93,10 +93,10 @@ func TestCoco(t *testing.T) {
 		fmt.Println("Index: ", out[0].GetBoundingBox().GetIndex())
 		fmt.Println("Label: ", out[0].GetBoundingBox().GetLabel())
 		fmt.Println("Xmin: ", out[0].GetBoundingBox().GetXmin())
-    fmt.Println("Ymin: ", out[0].GetBoundingBox().GetYmin())
-    fmt.Println("Xmax: ", out[0].GetBoundingBox().GetXmax())
-    fmt.Println("Ymax: ", out[0].GetBoundingBox().GetYmax())
-    fmt.Println("Probability: ", out[0].GetProbability())
+		fmt.Println("Ymin: ", out[0].GetBoundingBox().GetYmin())
+		fmt.Println("Xmax: ", out[0].GetBoundingBox().GetXmax())
+		fmt.Println("Ymax: ", out[0].GetBoundingBox().GetYmax())
+		fmt.Println("Probability: ", out[0].GetProbability())
 	}
 
 	if err := UnloadQuerySamples([]int{}); err != nil {

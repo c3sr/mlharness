@@ -1,5 +1,6 @@
 vendor/
 qsl/dataset/_fixtures
+wrapper/_*
 
 
 # we might want to modify the backend to delete these

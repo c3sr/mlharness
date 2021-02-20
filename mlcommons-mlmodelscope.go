@@ -14,15 +14,29 @@ import (
 )
 
 var (
-	mlmodelscopeSUT *sut.SUT
-	mlmodelscopeQSL dataset.Dataset
-	rootSpan        opentracing.Span
-	ctx             context.Context
+	mlmodelscopeSUT     *sut.SUT
+	mlmodelscopeQSL     dataset.Dataset
+	rootSpan            opentracing.Span
+	ctx                 context.Context
+	supportedTraceLevel = map[string]int{
+		"NO_TRACE":             0,
+		"APPLICATION_TRACE":    1,
+		"MODEL_TRACE":          2,
+		"FRAMEWORK_TRACE":      3,
+		"ML_LIBRARY_TRACE":     4,
+		"SYSTEM_LIBRARY_TRACE": 5,
+		"HARDWARE_TRACE":       6,
+		"FULL_TRACE":           7,
+	}
 )
 
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
 	datasetName string, imageList string, count int, useGPU bool, traceLevel string) error {
+
+	if _, ok := supportedTraceLevel[traceLevel]; !ok {
+		return fmt.Errorf("%s is not a supported trace level", traceLevel)
+	}
 
 	var err error
 
