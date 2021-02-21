@@ -107,12 +107,3 @@ func TestCoco(t *testing.T) {
 		t.Error(err)
 	}
 }
-
-func TestMain(m *testing.M) {
-	config.Init(
-		config.AppName("mlcommons-mlmodelscope"),
-		config.DebugMode(true),
-		config.VerboseMode(true),
-	)
-	os.Exit(m.Run())
-}

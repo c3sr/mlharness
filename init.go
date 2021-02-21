@@ -14,4 +14,9 @@ func init() {
 	config.AfterInit(func() {
 		log = logger.New().WithField("pkg", "mlcommonsmlmomodelscope")
 	})
+	config.Init(
+		config.AppName("mlcommons-mlmodelscope"),
+		config.DebugMode(true),
+		config.VerboseMode(true),
+	)
 }
