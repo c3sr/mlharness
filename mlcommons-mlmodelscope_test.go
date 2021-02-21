@@ -31,7 +31,7 @@ func TestImageNet(t *testing.T) {
 	pwd, _ := os.Getwd()
 	os.Setenv("DATA_DIR", filepath.Join(pwd, "qsl/dataset/_fixtures/fake_imagenet"))
 	if _, err := Initialize("pytorch", "torchvision_alexnet", "1.0",
-		"imagenet", "", 10, false, "FULL_TRACE", 2); err != nil {
+		"imagenet", "", 10, false, "FULL_TRACE", 3); err != nil {
 		t.Error(err)
 	}
 
@@ -68,7 +68,7 @@ func TestImageNet(t *testing.T) {
 func TestCoco(t *testing.T) {
 	pwd, _ := os.Getwd()
 	os.Setenv("DATA_DIR", filepath.Join(pwd, "qsl/dataset/_fixtures/fake_coco"))
-	if err := _, Initialize("onnxruntime", "onnxvision_ssd", "1.0",
+	if _, err := Initialize("onnxruntime", "onnxvision_ssd", "1.0",
 		"coco", "", 0, false, "FULL_TRACE", 1); err != nil {
 		t.Error(err)
 	}
