@@ -32,10 +32,10 @@ var (
 
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
-	datasetName string, imageList string, count int, useGPU bool, traceLevel string) error {
+	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
 
 	if _, ok := supportedTraceLevel[traceLevel]; !ok {
-		return fmt.Errorf("%s is not a supported trace level", traceLevel)
+		return 0, fmt.Errorf("%s is not a supported trace level", traceLevel)
 	}
 
 	var err error
@@ -51,16 +51,16 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	fmt.Println("Start initializing SUT...")
 
-	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel)
+	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel, batchSize)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	fmt.Println("Finish initializing SUT...")
 
 	opt, err := mlmodelscopeSUT.GetPreprocessOptions()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	path := os.Getenv("DATA_DIR")
@@ -69,12 +69,16 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	mlmodelscopeQSL, err = qsl.NewQSL(ctx, datasetName, path, imageList, count, opt)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	fmt.Println("Finish initializing QSL...")
 
-	return nil
+	if batchSize < 1 || batchSize > 128 {
+		return 0, fmt.Errorf("Please give a batchsize between 1 and 128, right now is %d.", batchSize)
+	}
+
+	return mlmodelscopeQSL.GetItemCount(), nil
 }
 
 func Warmup() error {

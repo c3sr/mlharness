@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	base "github.com/c3sr/mlcommons-mlmodelscope"
 )
 
@@ -11,14 +13,15 @@ import (
 import "C"
 
 //export Initialize
-func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
-	cDatasetName *C.char, cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char) *C.char {
+func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char, cDatasetName *C.char,
+	cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cBatchSize C.int) *C.char {
 
-	if err := base.Initialize(C.GoString(cBackendName), C.GoString(cModelName), C.GoString(cModelVersion),
-		C.GoString(cDatasetName), C.GoString(cImageList), int(cCount), int(cUseGPU) != 0, C.GoString(cTraceLevel)); err != nil {
-		return C.CString(err.Error())
+	sz, err := base.Initialize(C.GoString(cBackendName), C.GoString(cModelName), C.GoString(cModelVersion), C.GoString(cDatasetName),
+		C.GoString(cImageList), int(cCount), int(cUseGPU) != 0, C.GoString(cTraceLevel), int(cBatchSize))
+	if err != nil {
+		return C.CString(fmt.Sprintf("0, %s", err.Error()))
 	}
-	return nil
+	return C.CString(fmt.Sprintf("%d, nil", sz))
 }
 
 func main() {}

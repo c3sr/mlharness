@@ -6,7 +6,7 @@ import (
 )
 
 func TestSUT(t *testing.T) {
-	sut, err := NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE")
+	sut, err := NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE", 1)
 	if err != nil {
 		t.Error(err)
 	}

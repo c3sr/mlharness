@@ -425,16 +425,19 @@ def initialize_sut(dataset, dataset_list, backend, model_name, model_version, co
     trace_level = trace_level.encode('utf-8')
     """
     Go Function Signature
-    func Initialize(backendName string, modelName string, modelVersion string,
-                    datasetName string, imageList string, count int, useGPU bool, traceLevel string)
+    func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char, cDatasetName *C.char,
+	                  cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cBatchSize C.int) *C.char
     """
     so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
     so.Initialize.restype = ctypes.c_void_p
     so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p,
-                                c_char_p, c_int, c_int, c_char_p]
+                                c_char_p, c_int, c_int, c_char_p, c_int]
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
                                                 c_char_p(dataset), c_char_p(dataset_list),
-                                                c_int(count), c_int(use_gpu), c_char_p(trace_level)))
+                                                c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(1)))
+
+    print(ret_msg.decode('utf-8'))
+
     return
 
 

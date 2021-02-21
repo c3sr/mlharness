@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/c3sr/config"
 	_ "github.com/c3sr/tracer/jaeger"
 )
 
@@ -31,8 +30,8 @@ func TestInfoModels(t *testing.T) {
 func TestImageNet(t *testing.T) {
 	pwd, _ := os.Getwd()
 	os.Setenv("DATA_DIR", filepath.Join(pwd, "qsl/dataset/_fixtures/fake_imagenet"))
-	if err := Initialize("pytorch", "torchvision_alexnet", "1.0",
-		"imagenet", "", 10, false, "FULL_TRACE"); err != nil {
+	if _, err := Initialize("pytorch", "torchvision_alexnet", "1.0",
+		"imagenet", "", 10, false, "FULL_TRACE", 2); err != nil {
 		t.Error(err)
 	}
 
@@ -69,8 +68,8 @@ func TestImageNet(t *testing.T) {
 func TestCoco(t *testing.T) {
 	pwd, _ := os.Getwd()
 	os.Setenv("DATA_DIR", filepath.Join(pwd, "qsl/dataset/_fixtures/fake_coco"))
-	if err := Initialize("onnxruntime", "onnxvision_ssd", "1.0",
-		"coco", "", 0, false, "FULL_TRACE"); err != nil {
+	if err := _, Initialize("onnxruntime", "onnxvision_ssd", "1.0",
+		"coco", "", 0, false, "FULL_TRACE", 1); err != nil {
 		t.Error(err)
 	}
 
