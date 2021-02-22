@@ -3,20 +3,18 @@
 Bindings between mlcommons and mlmodelscope.
 
 TODO
-- [ ] Python - Go bindings
-  - [ ] ... 
-- [ ] SUT
+- [x] Python - Go bindings
+  - [x] ... 
+- [x] SUT
   - [x] Initialization
-  - [ ] ConstructSUT
-    - [ ] issue query
-    - [ ] flush query
-    - [ ] report latency
-- [ ] QSL
+  - [x] ConstructSUT
+    - [x] issue query
+    - [x] flush query
+    - [x] report latency
+- [x] QSL
   - [x] Initialization
     - [x] ImageNet
     - [x] COCO
-  - [ ] ConstructQSL
-    - [ ] total_sample_count
-    - [ ] performance_sample_count
-    - [ ] load samples
-    - [ ] unload samples
+  - [x] ConstructQSL
+    - [x] load samples
+    - [x] unload samples

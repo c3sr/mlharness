@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl/dataset"
 	"github.com/c3sr/mlcommons-mlmodelscope/sut"
@@ -32,10 +31,10 @@ var (
 
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
-	datasetName string, imageList string, count int, useGPU bool, traceLevel string) error {
+	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
 
 	if _, ok := supportedTraceLevel[traceLevel]; !ok {
-		return fmt.Errorf("%s is not a supported trace level", traceLevel)
+		return 0, fmt.Errorf("%s is not a supported trace level", traceLevel)
 	}
 
 	var err error
@@ -51,16 +50,16 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	fmt.Println("Start initializing SUT...")
 
-	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel)
+	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel, batchSize)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	fmt.Println("Finish initializing SUT...")
 
 	opt, err := mlmodelscopeSUT.GetPreprocessOptions()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	path := os.Getenv("DATA_DIR")
@@ -69,15 +68,23 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	mlmodelscopeQSL, err = qsl.NewQSL(ctx, datasetName, path, imageList, count, opt)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	fmt.Println("Finish initializing QSL...")
 
-	return nil
+	if batchSize < 1 || batchSize > 128 {
+		return 0, fmt.Errorf("Please give a batchsize between 1 and 128, right now is %d.", batchSize)
+	}
+
+	if err := warmup(); err != nil {
+		return 0, err
+	}
+
+	return mlmodelscopeQSL.GetItemCount(), nil
 }
 
-func Warmup() error {
+func warmup() error {
 	wamupSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
@@ -100,9 +107,7 @@ func Warmup() error {
 	}
 
 	for ii := 0; ii < 5; ii++ {
-		if _, err := mlmodelscopeSUT.ProcessQuery(issueCtx, data); err != nil {
-			return err
-		}
+		mlmodelscopeSUT.ProcessQuery(issueCtx, data, []int{0})
 	}
 
 	if err := UnloadQuerySamples([]int{}); err != nil {
@@ -114,7 +119,7 @@ func Warmup() error {
 }
 
 // TODO: What do we want to return to python?
-func IssueQuery(sampleList []int) ([]dl.Features, error) {
+func IssueQuery(sampleList []int) string {
 	issueSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
@@ -127,10 +132,10 @@ func IssueQuery(sampleList []int) ([]dl.Features, error) {
 
 	data, err := mlmodelscopeQSL.GetSamples(sampleList)
 	if err != nil {
-		return nil, err
+		return "[[]]"
 	}
 
-	return mlmodelscopeSUT.ProcessQuery(issueCtx, data)
+	return mlmodelscopeSUT.ProcessQuery(issueCtx, data, sampleList)
 }
 
 func LoadQuerySamples(sampleList []int) error {
@@ -145,7 +150,7 @@ func InfoModels(backendName string) error {
 	return sut.InfoModels(backendName)
 }
 
-// This needs to be call once from the python side in the end
+// This needs to be called once from the python side in the end
 func Finalize() error {
 	mlmodelscopeSUT.Close()
 	rootSpan.Finish()

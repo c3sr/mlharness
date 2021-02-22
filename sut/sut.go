@@ -2,8 +2,10 @@ package sut
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 
 	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/dlframework/framework/agent"
@@ -27,6 +29,7 @@ import (
 
 type SUT struct {
 	predictor common.Predictor
+	batchSize int
 }
 
 type backend struct {
@@ -45,7 +48,8 @@ var (
 )
 
 // NewSUT ...
-func NewSUT(ctx context.Context, backendName string, modelName string, modelVersion string, useGPU bool, traceLevel string) (*SUT, error) {
+func NewSUT(ctx context.Context, backendName string, modelName string,
+	modelVersion string, useGPU bool, traceLevel string, batchSize int) (*SUT, error) {
 
 	initSUTSpan, ctx := tracer.StartSpanFromContext(
 		ctx,
@@ -130,6 +134,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 		DeviceCount: dc,
 	}
 	predOpts := &dl.PredictionOptions{
+		BatchSize:        int32(batchSize),
 		ExecutionOptions: execOpts,
 	}
 
@@ -145,8 +150,13 @@ func NewSUT(ctx context.Context, backendName string, modelName string, modelVers
 
 	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n", model.MustCanonicalName())
 
+	if batchSize > 128 || batchSize < 1 {
+		fmt.Printf("Batchsize = %d is not supported, default to 128.\n", batchSize)
+	}
+
 	return &SUT{
 		predictor: predictor,
+		batchSize: batchSize,
 	}, nil
 }
 
@@ -189,32 +199,58 @@ func InfoModels(backendName string) error {
 	return nil
 }
 
-func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Features, error) {
+func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList []int) string {
 	input := make(chan interface{}, defaultChannelBuffer)
-
-	go func() {
-		defer close(input)
-		for _, d := range data {
-			input <- []interface{}{d}
-		}
-	}()
-
 	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
 		Then(steps.NewPredict(s.predictor)).
 		Run(input)
 
+	imageParts := dl.Partition(data, s.batchSize)
 	res := make([]dl.Features, len(data))
 
-	for ii, _ := range data {
-		out0 := <-output
+	for i, d := range imageParts {
 
-		out, ok := out0.(steps.IDer)
-		if !ok {
-			return nil, fmt.Errorf("expecting steps.IDer, but got %v", out0)
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(len(d))
+
+		input <- d
+		for j := 0; j < len(d); j++ {
+			out0 := <-output
+
+			out, ok := out0.(steps.IDer)
+			if !ok {
+				return "[[]]"
+			}
+			res[i*s.batchSize+j] = out.GetData().(dl.Features)
 		}
-
-		res[ii] = out.GetData().(dl.Features)
 	}
 
-	return res, nil
+	close(input)
+
+	modelModality, _ := s.predictor.Modality()
+
+	switch modelModality {
+	case "image_classification":
+		resSlice := make([][]float32, len(data))
+		for i := 0; i < len(data); i++ {
+			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex())}
+		}
+		resJSON, _ := json.Marshal(resSlice)
+		return string(resJSON)
+	case "image_object_detection":
+		resSlice := make([][][]float32, len(data))
+		for i := 0; i < len(data); i++ {
+			for _, f := range res[i] {
+				// hard coded, maybe need to be added into model manifest
+				if f.GetProbability() < 0.5 {
+					break
+				}
+				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(),
+					f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
+			}
+		}
+		resJSON, _ := json.Marshal(resSlice)
+		return string(resJSON)
+	}
+
+	return ""
 }

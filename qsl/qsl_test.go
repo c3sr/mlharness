@@ -11,7 +11,7 @@ import (
 )
 
 func TestQSL(t *testing.T) {
-	sut, err := sut.NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE")
+	sut, err := sut.NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE", 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -59,7 +59,7 @@ func TestQSL(t *testing.T) {
 }
 
 func TestCoco(t *testing.T) {
-	sut, err := sut.NewSUT(context.Background(), "onnxruntime", "onnxvision_ssd", "1.0", false, "FULL_TRACE")
+	sut, err := sut.NewSUT(context.Background(), "onnxruntime", "onnxvision_ssd", "1.0", false, "FULL_TRACE", 1)
 	if err != nil {
 		t.Error(err)
 	}

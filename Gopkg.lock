@@ -237,15 +237,15 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:b39d2bfcf515185aa9c99a9deaf28a67ea0c7622a63d7f142c785a130dccb172"
+  digest = "1:7e23d9c92ed7a211c2885abad715c5782e1b8fa912dee1cb984e8067cf685839"
   name = "github.com/c3sr/go-cupti"
   packages = [
     ".",
     "types",
   ]
   pruneopts = "T"
-  revision = "de0372757b491f184dc7def4b7f2a136acffa025"
-  version = "v0.1.0"
+  revision = "fa99510b59d8c3af2d896dfa4724c0194d4ad97d"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:081c0560f0a28d485d3ca8045d010a73130cd5d171dd535c9894ae61b6b9ceb6"
