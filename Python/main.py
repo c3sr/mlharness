@@ -25,7 +25,7 @@ import numpy as np
 # import coco
 
 import ctypes
-from ctypes import c_int, c_char_p
+from ctypes import *
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("main")
@@ -162,12 +162,12 @@ MILLI_SEC = 1000
 #     },
 # }
 
-# SCENARIO_MAP = {
-#     "SingleStream": lg.TestScenario.SingleStream,
-#     "MultiStream": lg.TestScenario.MultiStream,
-#     "Server": lg.TestScenario.Server,
-#     "Offline": lg.TestScenario.Offline,
-# }
+SCENARIO_MAP = {
+    "SingleStream": lg.TestScenario.SingleStream,
+    "MultiStream": lg.TestScenario.MultiStream,
+    "Server": lg.TestScenario.Server,
+    "Offline": lg.TestScenario.Offline,
+}
 
 last_timeing = []
 
@@ -181,30 +181,35 @@ TRACE_LEVEL = ("APPLICATION_TRACE",
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=SUPPORTED_DATASETS.keys(), help="dataset")
-    # parser.add_argument("--dataset-path", required=True, help="path to the dataset")
+    parser.add_argument("--dataset", help="dataset")
     parser.add_argument("--dataset-list", help="path to the dataset list")
-    # parser.add_argument("--data-format", choices=["NCHW", "NHWC"], help="data format")
-    # parser.add_argument("--profile", choices=SUPPORTED_PROFILES.keys(), help="standard profiles")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
-    # parser.add_argument("--max-batchsize", type=int, help="max batch size in a single inference")
-    # parser.add_argument("--model", required=True, help="model file")
+    # in MLPerf the default max-batchsize value is 128, but in MLModelScope lots of model can only support size of 1
+    parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
     parser.add_argument("--output", help="test results")
-    # parser.add_argument("--inputs", help="model inputs")
-    # parser.add_argument("--outputs", help="model outputs")
     parser.add_argument("--backend", help="runtime to use")
     parser.add_argument("--model-name", help="name of the mlperf model, ie. resnet50")
-    # parser.add_argument("--threads", default=os.cpu_count(), type=int, help="threads")
     parser.add_argument("--qps", type=int, help="target qps")
-    # parser.add_argument("--cache", type=int, default=0, help="use cache")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--find-peak-performance", action="store_true", help="enable finding peak performance pass")
 
     # file to use mlperf rules compliant parameters
-    parser.add_argument("--mlperf_conf", default="../../mlperf.conf", help="mlperf rules config")
+    parser.add_argument("--mlperf_conf", default="../inference/mlperf.conf", help="mlperf rules config")
     # file for user LoadGen settings such as target QPS
-    parser.add_argument("--user_conf", default="user.conf", help="user config for user LoadGen settings such as target QPS")
+    parser.add_argument("--user_conf", default="../inference/vision/classification_and_detection/user.conf", help="user config for user LoadGen settings such as target QPS")
+
+
+    # unused arguments from MLPerf
+    # parser.add_argument("--dataset-path", required=True, help="path to the dataset")
+    # parser.add_argument("--data-format", choices=["NCHW", "NHWC"], help="data format")
+    # parser.add_argument("--profile", choices=SUPPORTED_PROFILES.keys(), help="standard profiles")
+    # parser.add_argument("--model", required=True, help="model file")
+    # parser.add_argument("--inputs", help="model inputs")
+    # parser.add_argument("--outputs", help="model outputs")
+    # parser.add_argument("--threads", default=os.cpu_count(), type=int, help="threads")
+    # parser.add_argument("--cache", type=int, default=0, help="use cache")
+    
 
     # below will override mlperf rules compliant settings - don't use for official submission
     parser.add_argument("--time", type=int, help="time to scan in seconds")
@@ -406,14 +411,22 @@ def add_results(final_results, name, result_dict, result_list, took, show_accura
         name, result["qps"], result["mean"], took, acc_str,
         len(result_list), buckets_str))
 
-def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level):
-    # (dataset, backend, use_gpu) won't be None, checked by main()
+def parse_ret_msg(ret_msg):
+    count, err = ret_msg.split(',', 1)
+    count = int(count)
+    return count, err
+
+def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
+    # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
     if dataset_list is None:
         dataset_list = ""
     if model_name is None:
         model_name = ""
     if model_version is None:
         model_version = ""
+    # --count applies to accuracy mode only and can be used to limit the number of images
+    # for testing. For perf model we always limit count to 200.
+    # Jake Pu: I have no clue where they limit it to 200.
     if count is None:
         count = 0
     # ensure encoding of all strings
@@ -423,44 +436,56 @@ def initialize_sut(dataset, dataset_list, backend, model_name, model_version, co
     dataset = dataset.encode('utf-8')
     dataset_list = dataset_list.encode('utf-8')
     trace_level = trace_level.encode('utf-8')
-    """
-    Go Function Signature
-    func Initialize(backendName string, modelName string, modelVersion string,
-                    datasetName string, imageList string, count int, useGPU bool, traceLevel string)
-    """
-    so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
-    so.Initialize.restype = ctypes.c_void_p
-    so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p,
-                                c_char_p, c_int, c_int, c_char_p]
+
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
                                                 c_char_p(dataset), c_char_p(dataset_list),
-                                                c_int(count), c_int(use_gpu), c_char_p(trace_level)))
-    return
+                                                c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
+    count, err = parse_ret_msg(ret_msg)
+    return count, err
 
-
+def load_go_shared_library():
+    so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
+    """
+    Go Function Signature
+    func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
+	cDatasetName *C.char, cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cMaxBatchsize C.int) *C.char
+    """
+    so.Initialize.restype = c_char_p
+    so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p,
+                                c_char_p, c_int, c_int, c_char_p]
+    
+    so.IssueQuery.restype = c_char_p
+    """
+    Have to use numpy ndarray to pass the integer list
+    https://nesi.github.io/perf-training/python-scatter/ctypes#learn-the-basics
+    https://numpy.org/doc/stable/reference/routines.ctypeslib.html#module-numpy.ctypeslib
+    https://numpy.org/devdocs/user/basics.types.html
+    """
+    so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    return so
 
 def main():
 
-
+    global so
     # global last_timeing
-    # args = get_args()
+    args = get_args()
 
-    # log.info(args)
+    log.info(args)
 
-  initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
+
 
     # # find backend
-    # backend = get_backend(args.backend)
+    backend = get_backend(args.backend)
 
     # # override image format if given
     # image_format = args.data_format if args.data_format else backend.image_format()
 
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
-    # count_override = False
-    # count = args.count
-    # if count:
-    #     count_override = True
+    count_override = False
+    count = args.count
+    if count:
+        count_override = True
 
     # # dataset to use
     # wanted_dataset, pre_proc, post_proc, kwargs = SUPPORTED_DATASETS[args.dataset]
@@ -481,20 +506,30 @@ def main():
     #     "cmdline": str(args),
     # }
 
-    # mlperf_conf = os.path.abspath(args.mlperf_conf)
-    # if not os.path.exists(mlperf_conf):
-    #     log.error("{} not found".format(mlperf_conf))
-    #     sys.exit(1)
+    """
+    Python signature
+    initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize)
+    """
+    # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
+    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name, 
+                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
 
-    # user_conf = os.path.abspath(args.user_conf)
-    # if not os.path.exists(user_conf):
-    #     log.error("{} not found".format(user_conf))
-    #     sys.exit(1)
+    if (err != 'nil'):
+        raise RuntimeError('SUT initialization failed')
+    mlperf_conf = os.path.abspath(args.mlperf_conf)
+    if not os.path.exists(mlperf_conf):
+        log.error("{} not found".format(mlperf_conf))
+        sys.exit(1)
 
-    # if args.output:
-    #     output_dir = os.path.abspath(args.output)
-    #     os.makedirs(output_dir, exist_ok=True)
-    #     os.chdir(output_dir)
+    user_conf = os.path.abspath(args.user_conf)
+    if not os.path.exists(user_conf):
+        log.error("{} not found".format(user_conf))
+        sys.exit(1)
+
+    if args.output:
+        output_dir = os.path.abspath(args.output)
+        os.makedirs(output_dir, exist_ok=True)
+        os.chdir(output_dir)
 
     #
     # make one pass over the dataset to validate accuracy
@@ -508,7 +543,7 @@ def main():
     #     _ = backend.predict({backend.inputs[0]: img})
     # ds.unload_query_samples(None)
 
-    # scenario = SCENARIO_MAP[args.scenario]
+    scenario = SCENARIO_MAP[args.scenario]
     # runner_map = {
     #     lg.TestScenario.SingleStream: RunnerBase,
     #     lg.TestScenario.MultiStream: QueueRunner,
@@ -517,73 +552,82 @@ def main():
     # }
     # runner = runner_map[scenario](model, ds, args.threads, post_proc=post_proc, max_batchsize=args.max_batchsize)
 
-    # def issue_queries(query_samples):
-    #     runner.enqueue(query_samples)
+    def issue_queries(query_samples):
+        global so
+        idx = np.array([q.index for q in query_samples])
+        query_id = [q.id for q in query_samples]
+        so.IssueQuery(len(idx), idx)
 
-    # def flush_queries():
-    #     pass
+    def flush_queries():
+        pass
 
-    # def process_latencies(latencies_ns):
-    #     # called by loadgen to show us the recorded latencies
-    #     global last_timeing
-    #     last_timeing = [t / NANO_SEC for t in latencies_ns]
+    def process_latencies(latencies_ns):
+        # called by loadgen to show us the recorded latencies
+        global last_timeing
+        last_timeing = [t / NANO_SEC for t in latencies_ns]
 
-    # settings = lg.TestSettings()
-    # settings.FromConfig(mlperf_conf, args.model_name, args.scenario)
-    # settings.FromConfig(user_conf, args.model_name, args.scenario)
-    # settings.scenario = scenario
-    # settings.mode = lg.TestMode.PerformanceOnly
-    # if args.accuracy:
-    #     settings.mode = lg.TestMode.AccuracyOnly
-    # if args.find_peak_performance:
-    #     settings.mode = lg.TestMode.FindPeakPerformance
+    settings = lg.TestSettings()
+    settings.FromConfig(mlperf_conf, args.model_name, args.scenario)
+    settings.FromConfig(user_conf, args.model_name, args.scenario)
+    settings.scenario = scenario
+    settings.mode = lg.TestMode.PerformanceOnly
+    if args.accuracy:
+        settings.mode = lg.TestMode.AccuracyOnly
+    if args.find_peak_performance:
+        settings.mode = lg.TestMode.FindPeakPerformance
 
-    # if args.time:
-    #     # override the time we want to run
-    #     settings.min_duration_ms = args.time * MILLI_SEC
-    #     settings.max_duration_ms = args.time * MILLI_SEC
+    if args.time:
+        # override the time we want to run
+        settings.min_duration_ms = args.time * MILLI_SEC
+        settings.max_duration_ms = args.time * MILLI_SEC
 
-    # if args.qps:
-    #     qps = float(args.qps)
-    #     settings.server_target_qps = qps
-    #     settings.offline_expected_qps = qps
+    if args.qps:
+        qps = float(args.qps)
+        settings.server_target_qps = qps
+        settings.offline_expected_qps = qps
 
-    # if count_override:
-    #     settings.min_query_count = count
-    #     settings.max_query_count = count
+    if count_override:
+        settings.min_query_count = count
+        settings.max_query_count = count
 
-    # if args.samples_per_query:
-    #     settings.multi_stream_samples_per_query = args.samples_per_query
-    # if args.max_latency:
-    #     settings.server_target_latency_ns = int(args.max_latency * NANO_SEC)
-    #     settings.multi_stream_target_latency_ns = int(args.max_latency * NANO_SEC)
+    if args.samples_per_query:
+        settings.multi_stream_samples_per_query = args.samples_per_query
+    if args.max_latency:
+        settings.server_target_latency_ns = int(args.max_latency * NANO_SEC)
+        settings.multi_stream_target_latency_ns = int(args.max_latency * NANO_SEC)
 
-    # sut = lg.ConstructSUT(issue_queries, flush_queries, process_latencies)
-    # qsl = lg.ConstructQSL(count, min(count, 500), ds.load_query_samples, ds.unload_query_samples)
+    
+    sut = lg.ConstructSUT(issue_queries, flush_queries, process_latencies)
+    qsl = lg.ConstructQSL(count, min(count, 500), ds.load_query_samples, ds.unload_query_samples)
 
-    # log.info("starting {}".format(scenario))
-    # result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
+    log.info("starting {}".format(scenario))
+    result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
     # runner.start_run(result_dict, args.accuracy)
-    # lg.StartTest(sut, qsl, settings)
+    lg.StartTest(sut, qsl, settings)
 
-    # if not last_timeing:
-    #     last_timeing = runner.result_timing
-    # if args.accuracy:
-    #     post_proc.finalize(result_dict, ds, output_dir=args.output)
-    # add_results(final_results, "{}".format(scenario),
-    #             result_dict, last_timeing, time.time() - ds.last_loaded, args.accuracy)
+    if not last_timeing:
+        last_timeing = runner.result_timing
+    if args.accuracy:
+        post_proc.finalize(result_dict, ds, output_dir=args.output)
+    add_results(final_results, "{}".format(scenario),
+                result_dict, last_timeing, time.time() - ds.last_loaded, args.accuracy)
 
-    # runner.finish()
-    # lg.DestroyQSL(qsl)
-    # lg.DestroySUT(sut)
+    runner.finish()
+    lg.DestroyQSL(qsl)
+    lg.DestroySUT(sut)
 
-    #
+    
     # write final results
-    #
-    # if args.output:
-    #     with open("results.json", "w") as f:
-    #         json.dump(final_results, f, sort_keys=True, indent=4)
+    
+    if args.output:
+        with open("results.json", "w") as f:
+            json.dump(final_results, f, sort_keys=True, indent=4)
 
+
+
+
+# load MLModelScope go wrapper shared libraby
+so = load_go_shared_library()
 
 if __name__ == "__main__":
     main()
