@@ -43,16 +43,8 @@ func TestImageNet(t *testing.T) {
 		t.Error(err)
 	}
 
-	res, err := IssueQuery([]int{0, 2, 4, 6})
-	if err != nil {
-		t.Error(err)
-	}
-
-	for _, out := range res {
-		fmt.Println("Index: ", out[0].GetClassification().GetIndex())
-		fmt.Println("Label: ", out[0].GetClassification().GetLabel())
-		fmt.Println("Probability: ", out[0].GetProbability())
-	}
+	res := IssueQuery([]int{0, 2, 4, 6})
+	fmt.Println(res)
 
 	if err := UnloadQuerySamples([]int{}); err != nil {
 		t.Error(err)
@@ -79,20 +71,8 @@ func TestCoco(t *testing.T) {
 		t.Error(err)
 	}
 
-	res, err := IssueQuery([]int{0, 2, 4, 6})
-	if err != nil {
-		t.Error(err)
-	}
-
-	for _, out := range res {
-		fmt.Println("Index: ", out[0].GetBoundingBox().GetIndex())
-		fmt.Println("Label: ", out[0].GetBoundingBox().GetLabel())
-		fmt.Println("Xmin: ", out[0].GetBoundingBox().GetXmin())
-		fmt.Println("Ymin: ", out[0].GetBoundingBox().GetYmin())
-		fmt.Println("Xmax: ", out[0].GetBoundingBox().GetXmax())
-		fmt.Println("Ymax: ", out[0].GetBoundingBox().GetYmax())
-		fmt.Println("Probability: ", out[0].GetProbability())
-	}
+	res := IssueQuery([]int{0, 2, 4, 6})
+	fmt.Println(res)
 
 	if err := UnloadQuerySamples([]int{}); err != nil {
 		t.Error(err)

@@ -2,6 +2,7 @@ package sut
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -198,7 +199,7 @@ func InfoModels(backendName string) error {
 	return nil
 }
 
-func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Features, error) {
+func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList []int) string {
 	input := make(chan interface{}, defaultChannelBuffer)
 	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
 		Then(steps.NewPredict(s.predictor)).
@@ -217,7 +218,7 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Featur
 
 			out, ok := out0.(steps.IDer)
 			if !ok {
-				return nil, fmt.Errorf("expecting steps.IDer, but got %v", out0)
+				return "[[]]"
 			}
 			res[i*s.batchSize+j] = out.GetData().(dl.Features)
 		}
@@ -225,5 +226,31 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Featur
 
 	close(input)
 
-	return res, nil
+	modelModality, _ := s.predictor.Modality()
+
+	switch modelModality {
+	case "image_classification":
+		resSlice := make([][]float32, len(data))
+		for i := 0; i < len(data); i++ {
+			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex())}
+		}
+		resJSON, _ := json.Marshal(resSlice)
+		return string(resJSON)
+	case "image_object_detection":
+		resSlice := make([][][]float32, len(data))
+		for i := 0; i < len(data); i++ {
+			for _, f := range res[i] {
+				// hard coded, maybe need to be added into model manifest
+				if f.GetProbability() < 0.5 {
+					break
+				}
+				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(),
+					f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
+			}
+		}
+		resJSON, _ := json.Marshal(resSlice)
+		return string(resJSON)
+	}
+
+	return ""
 }

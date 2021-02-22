@@ -25,6 +25,19 @@ func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
 	return C.CString(fmt.Sprintf("%d, nil", sz))
 }
 
+//export IssueQuery
+func IssueQuery(cLen C.int, cSampleList *C.int) *C.char {
+	len := int(cLen)
+	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
+	sampleList := make([]int, len)
+
+	for i := 0; i < len; i++ {
+		sampleList[i] = int(slice[i])
+	}
+
+	return C.CString(base.IssueQuery(sampleList))
+}
+
 //export LoadQuerySamples
 func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
 	len := int(cLen)

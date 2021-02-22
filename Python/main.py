@@ -17,12 +17,8 @@ import threading
 import time
 from queue import Queue
 
-# import mlperf_loadgen as lg
+import mlperf_loadgen as lg
 import numpy as np
-
-# import dataset
-# import imagenet
-# import coco
 
 import ctypes
 from ctypes import *
@@ -32,135 +28,6 @@ log = logging.getLogger("main")
 
 NANO_SEC = 1e9
 MILLI_SEC = 1000
-
-# pylint: disable=missing-docstring
-
-# the datasets we support
-# SUPPORTED_DATASETS = {
-#     "imagenet":
-#         (imagenet.Imagenet, dataset.pre_process_vgg, dataset.PostProcessCommon(offset=-1),
-#          {"image_size": [224, 224, 3]}),
-#     "imagenet_mobilenet":
-#         (imagenet.Imagenet, dataset.pre_process_mobilenet, dataset.PostProcessArgMax(offset=-1),
-#          {"image_size": [224, 224, 3]}),
-#     "coco-300":
-#         (coco.Coco, dataset.pre_process_coco_mobilenet, coco.PostProcessCoco(),
-#          {"image_size": [300, 300, 3]}),
-#     "coco-300-pt":
-#         (coco.Coco, dataset.pre_process_coco_pt_mobilenet, coco.PostProcessCocoPt(False,0.3),
-#          {"image_size": [300, 300, 3]}),
-#     "coco-1200":
-#         (coco.Coco, dataset.pre_process_coco_resnet34, coco.PostProcessCoco(),
-#          {"image_size": [1200, 1200, 3]}),
-#     "coco-1200-onnx":
-#         (coco.Coco, dataset.pre_process_coco_resnet34, coco.PostProcessCocoOnnx(),
-#          {"image_size": [1200, 1200, 3]}),
-#     "coco-1200-pt":
-#         (coco.Coco, dataset.pre_process_coco_resnet34, coco.PostProcessCocoPt(True,0.05),
-#          {"image_size": [1200, 1200, 3],"use_label_map": True}),
-#     "coco-1200-tf":
-#         (coco.Coco, dataset.pre_process_coco_resnet34, coco.PostProcessCocoTf(),
-#          {"image_size": [1200, 1200, 3],"use_label_map": False}),
-# }
-
-# pre-defined command line options so simplify things. They are used as defaults and can be
-# overwritten from command line
-
-# SUPPORTED_PROFILES = {
-#     "defaults": {
-#         "dataset": "imagenet",
-#         "backend": "tensorflow",
-#         "cache": 0,
-#         "max-batchsize": 32,
-#     },
-
-#     # resnet
-#     "resnet50-tf": {
-#         "inputs": "input_tensor:0",
-#         "outputs": "ArgMax:0",
-#         "dataset": "imagenet",
-#         "backend": "tensorflow",
-#         "model-name": "resnet50",
-#     },
-#     "resnet50-onnxruntime": {
-#         "dataset": "imagenet",
-#         "outputs": "ArgMax:0",
-#         "backend": "onnxruntime",
-#         "model-name": "resnet50",
-#     },
-
-#     # mobilenet
-#     "mobilenet-tf": {
-#         "inputs": "input:0",
-#         "outputs": "MobilenetV1/Predictions/Reshape_1:0",
-#         "dataset": "imagenet_mobilenet",
-#         "backend": "tensorflow",
-#         "model-name": "mobilenet",
-#     },
-#     "mobilenet-onnxruntime": {
-#         "dataset": "imagenet_mobilenet",
-#         "outputs": "MobilenetV1/Predictions/Reshape_1:0",
-#         "backend": "onnxruntime",
-#         "model-name": "mobilenet",
-#     },
-
-#     # ssd-mobilenet
-#     "ssd-mobilenet-tf": {
-#         "inputs": "image_tensor:0",
-#         "outputs": "num_detections:0,detection_boxes:0,detection_scores:0,detection_classes:0",
-#         "dataset": "coco-300",
-#         "backend": "tensorflow",
-#         "model-name": "ssd-mobilenet",
-#     },
-#     "ssd-mobilenet-pytorch": {
-#         "inputs": "image",
-#         "outputs": "bboxes,labels,scores",
-#         "dataset": "coco-300-pt",
-#         "backend": "pytorch-native",
-#         "model-name": "ssd-mobilenet",
-#     },
-#     "ssd-mobilenet-onnxruntime": {
-#         "dataset": "coco-300",
-#         "outputs": "num_detections:0,detection_boxes:0,detection_scores:0,detection_classes:0",
-#         "backend": "onnxruntime",
-#         "data-format": "NHWC",
-#         "model-name": "ssd-mobilenet",
-#     },
-
-#     # ssd-resnet34
-#     "ssd-resnet34-tf": {
-#         "inputs": "image:0",
-#         "outputs": "detection_bboxes:0,detection_classes:0,detection_scores:0",
-#         "dataset": "coco-1200-tf",
-#         "backend": "tensorflow",
-#         "data-format": "NCHW",
-#         "model-name": "ssd-resnet34",
-#     },
-#     "ssd-resnet34-pytorch": {
-#         "inputs": "image",
-#         "outputs": "bboxes,labels,scores",
-#         "dataset": "coco-1200-pt",
-#         "backend": "pytorch-native",
-#         "model-name": "ssd-resnet34",
-#     },
-#     "ssd-resnet34-onnxruntime": {
-#         "dataset": "coco-1200-onnx",
-#         "inputs": "image",
-#         "outputs": "bboxes,labels,scores",
-#         "backend": "onnxruntime",
-#         "data-format": "NCHW",
-#         "max-batchsize": 1,
-#         "model-name": "ssd-resnet34",
-#     },
-#     "ssd-resnet34-onnxruntime-tf": {
-#         "dataset": "coco-1200-tf",
-#         "inputs": "image:0",
-#         "outputs": "detection_bboxes:0,detection_classes:0,detection_scores:0",
-#         "backend": "onnxruntime",
-#         "data-format": "NHWC",
-#         "model-name": "ssd-resnet34",
-#     },
-# }
 
 SCENARIO_MAP = {
     "SingleStream": lg.TestScenario.SingleStream,
@@ -223,29 +90,12 @@ def get_args():
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="MLModelScope Trace Level")
 
-
     args = parser.parse_args()
-
-    # don't use defaults in argparser. Instead we default to a dict, override that with a profile
-    # and take this as default unless command line give
-    # defaults = SUPPORTED_PROFILES["defaults"]
-
-    # if args.profile:
-    #     profile = SUPPORTED_PROFILES[args.profile]
-    #     defaults.update(profile)
-    # for k, v in defaults.items():
-    #     kc = k.replace("-", "_")
-    #     if getattr(args, kc) is None:
-    #         setattr(args, kc, v)
-    # if args.inputs:
-    #     args.inputs = args.inputs.split(",")
-    # if args.outputs:
-    #     args.outputs = args.outputs.split(",")
 
     if args.scenario not in SCENARIO_MAP:
         parser.error("valid scanarios:" + str(list(SCENARIO_MAP.keys())))
-    return args
 
+    return args
 
 def get_backend(backend):
     if backend == "tensorflow":
@@ -254,128 +104,10 @@ def get_backend(backend):
         return backend
     elif backend == "pytorch":
         return backend
-    elif backend == "tflite":
+    elif backend == "mxnet":
         return backend
     else:
         raise ValueError("unknown backend: " + backend)
-    return backend
-
-
-# class Item:
-#     """An item that we queue for processing by the thread pool."""
-
-#     def __init__(self, query_id, content_id, img, label=None):
-#         self.query_id = query_id
-#         self.content_id = content_id
-#         self.img = img
-#         self.label = label
-#         self.start = time.time()
-
-
-# class RunnerBase:
-#     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
-#         self.take_accuracy = False
-#         self.ds = ds
-#         self.model = model
-#         self.post_process = post_proc
-#         self.threads = threads
-#         self.take_accuracy = False
-#         self.max_batchsize = max_batchsize
-#         self.result_timing = []
-
-#     def handle_tasks(self, tasks_queue):
-#         pass
-
-#     def start_run(self, result_dict, take_accuracy):
-#         self.result_dict = result_dict
-#         self.result_timing = []
-#         self.take_accuracy = take_accuracy
-#         self.post_process.start()
-
-#     def run_one_item(self, qitem):
-#         # run the prediction
-#         processed_results = []
-#         try:
-#             results = self.model.predict({self.model.inputs[0]: qitem.img})
-#             processed_results = self.post_process(results, qitem.content_id, qitem.label, self.result_dict)
-#             if self.take_accuracy:
-#                 self.post_process.add_results(processed_results)
-#                 self.result_timing.append(time.time() - qitem.start)
-#         except Exception as ex:  # pylint: disable=broad-except
-#             src = [self.ds.get_item_loc(i) for i in qitem.content_id]
-#             log.error("thread: failed on contentid=%s, %s", src, ex)
-#             # since post_process will not run, fake empty responses
-#             processed_results = [[]] * len(qitem.query_id)
-#         finally:
-#             response_array_refs = []
-#             response = []
-#             for idx, query_id in enumerate(qitem.query_id):
-#                 response_array = array.array("B", np.array(processed_results[idx], np.float32).tobytes())
-#                 response_array_refs.append(response_array)
-#                 bi = response_array.buffer_info()
-#                 response.append(lg.QuerySampleResponse(query_id, bi[0], bi[1]))
-#             lg.QuerySamplesComplete(response)
-
-#     def enqueue(self, query_samples):
-#         idx = [q.index for q in query_samples]
-#         query_id = [q.id for q in query_samples]
-#         if len(query_samples) < self.max_batchsize:
-#             data, label = self.ds.get_samples(idx)
-#             self.run_one_item(Item(query_id, idx, data, label))
-#         else:
-#             bs = self.max_batchsize
-#             for i in range(0, len(idx), bs):
-#                 data, label = self.ds.get_samples(idx[i:i+bs])
-#                 self.run_one_item(Item(query_id[i:i+bs], idx[i:i+bs], data, label))
-
-#     def finish(self):
-#         pass
-
-
-# class QueueRunner(RunnerBase):
-#     def __init__(self, model, ds, threads, post_proc=None, max_batchsize=128):
-#         super().__init__(model, ds, threads, post_proc, max_batchsize)
-#         self.tasks = Queue(maxsize=threads * 4)
-#         self.workers = []
-#         self.result_dict = {}
-
-#         for _ in range(self.threads):
-#             worker = threading.Thread(target=self.handle_tasks, args=(self.tasks,))
-#             worker.daemon = True
-#             self.workers.append(worker)
-#             worker.start()
-
-#     def handle_tasks(self, tasks_queue):
-#         """Worker thread."""
-#         while True:
-#             qitem = tasks_queue.get()
-#             if qitem is None:
-#                 # None in the queue indicates the parent want us to exit
-#                 tasks_queue.task_done()
-#                 break
-#             self.run_one_item(qitem)
-#             tasks_queue.task_done()
-
-#     def enqueue(self, query_samples):
-#         idx = [q.index for q in query_samples]
-#         query_id = [q.id for q in query_samples]
-#         if len(query_samples) < self.max_batchsize:
-#             data, label = self.ds.get_samples(idx)
-#             self.tasks.put(Item(query_id, idx, data, label))
-#         else:
-#             bs = self.max_batchsize
-#             for i in range(0, len(idx), bs):
-#                 ie = i + bs
-#                 data, label = self.ds.get_samples(idx[i:ie])
-#                 self.tasks.put(Item(query_id[i:ie], idx[i:ie], data, label))
-
-#     def finish(self):
-#         # exit all threads
-#         for _ in self.workers:
-#             self.tasks.put(None)
-#         for worker in self.workers:
-#             worker.join()
-
 
 def add_results(final_results, name, result_dict, result_list, took, show_accuracy=False):
     percentiles = [50., 80., 90., 95., 99., 99.9]
@@ -416,7 +148,7 @@ def parse_ret_msg(ret_msg):
     count = int(count)
     return count, err
 
-def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
+def go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
     # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
     if dataset_list is None:
         dataset_list = ""
@@ -424,11 +156,13 @@ def initialize_sut(dataset, dataset_list, backend, model_name, model_version, co
         model_name = ""
     if model_version is None:
         model_version = ""
+
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
     # Jake Pu: I have no clue where they limit it to 200.
     if count is None:
         count = 0
+
     # ensure encoding of all strings
     backend = backend.encode('utf-8')
     model_name = model_name.encode('utf-8')
@@ -440,45 +174,88 @@ def initialize_sut(dataset, dataset_list, backend, model_name, model_version, co
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
                                                 c_char_p(dataset), c_char_p(dataset_list),
                                                 c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
-    count, err = parse_ret_msg(ret_msg)
+    count, err = parse_ret_msg(ret_msg.decode('utf-8'))
     return count, err
 
+def go_load_query_samples(sample_list, so):
+    sample_list = np.array(sample_list)
+    ret_msg = so.LoadQuerySamples(len(sample_list), sample_list)
+    return ret_msg.decode('utf-8')
+
+def go_unload_query_samples(sample_list):
+    if sample_list is None:
+        sample_list = []
+    sample_list = np.array(sample_list)
+    ret_msg = so.UnloadQuerySamples(len(sample_list), sample_list)
+    return ret_msg.decode('utf-8')
+
+def go_finalize():
+  ret_msg = so.Finalize()
+  return ret_msg.decode('utf-8')
+
 def load_go_shared_library():
+
     so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
+
     """
     Go Function Signature
     func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
-	cDatasetName *C.char, cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cMaxBatchsize C.int) *C.char
+	  cDatasetName *C.char, cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cMaxBatchsize C.int) *C.char
     """
     so.Initialize.restype = c_char_p
     so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p,
-                                c_char_p, c_int, c_int, c_char_p]
+                                c_char_p, c_int, c_int, c_char_p, c_int]
 
-    so.IssueQuery.restype = c_char_p
     """
     Have to use numpy ndarray to pass the integer list
     https://nesi.github.io/perf-training/python-scatter/ctypes#learn-the-basics
     https://numpy.org/doc/stable/reference/routines.ctypeslib.html#module-numpy.ctypeslib
     https://numpy.org/devdocs/user/basics.types.html
     """
+    so.IssueQuery.restype = c_char_p
     so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+
+    """
+    Go Function Signature
+    func Finalize() *C.char
+    """
+    so.Finalize.restype = c_char_p
+    so.Finalize.argtypes = []
+
+    """
+    Go Function Signature
+    func InfoModels(cBackendName *C.char) *C.char
+    """
+    so.InfoModels.restype = c_char_p
+    so.InfoModels.argtypes = [c_char_p]
+
+    """
+    Go Function Signature
+    func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
+    """
+    so.LoadQuerySamples.restype = c_char_p
+    so.LoadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+
+    """
+    Go Function Signature
+    func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
+    """
+    so.UnloadQuerySamples.restype = c_char_p
+    so.UnloadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+
     return so
 
 def main():
 
     global so
-    # global last_timeing
+    global last_timeing
+
     args = get_args()
 
     log.info(args)
 
-
-
-    # # find backend
+    # find backend
     backend = get_backend(args.backend)
-
-    # # override image format if given
-    # image_format = args.data_format if args.data_format else backend.image_format()
 
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
@@ -487,35 +264,23 @@ def main():
     if count:
         count_override = True
 
-    # # dataset to use
-    # wanted_dataset, pre_proc, post_proc, kwargs = SUPPORTED_DATASETS[args.dataset]
-    # ds = wanted_dataset(data_path=args.dataset_path,
-    #                     image_list=args.dataset_list,
-    #                     name=args.dataset,
-    #                     image_format=image_format,
-    #                     pre_process=pre_proc,
-    #                     use_cache=args.cache,
-    #                     count=count, **kwargs)
-    # load model to backend
-
-    # model = backend.load(args.model, inputs=args.inputs, outputs=args.outputs)
-    # final_results = {
-    #     "runtime": model.name(),
-    #     "version": model.version(),
-    #     "time": int(time.time()),
-    #     "cmdline": str(args),
-    # }
+    final_results = {
+        "runtime": args.model_name,
+        "version": args.model_version,
+        "time": int(time.time()),
+        "cmdline": str(args),
+    }
 
     """
     Python signature
-    initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize)
+    go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so)
     """
-    # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
-    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name,
+    count, err = go_initialize_sut(args.dataset, args.dataset_list, backend, args.model_name,
                     args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
 
     if (err != 'nil'):
-        raise RuntimeError('SUT initialization failed')
+        raise RuntimeError('initialization in go failed')
+
     mlperf_conf = os.path.abspath(args.mlperf_conf)
     if not os.path.exists(mlperf_conf):
         log.error("{} not found".format(mlperf_conf))
@@ -531,32 +296,22 @@ def main():
         os.makedirs(output_dir, exist_ok=True)
         os.chdir(output_dir)
 
-    #
-    # make one pass over the dataset to validate accuracy
-    #
-    # count = ds.get_item_count()
-
-    # warmup
-    # ds.load_query_samples([0])
-    # for _ in range(5):
-    #     img, _ = ds.get_samples([0])
-    #     _ = backend.predict({backend.inputs[0]: img})
-    # ds.unload_query_samples(None)
-
     scenario = SCENARIO_MAP[args.scenario]
-    # runner_map = {
-    #     lg.TestScenario.SingleStream: RunnerBase,
-    #     lg.TestScenario.MultiStream: QueueRunner,
-    #     lg.TestScenario.Server: QueueRunner,
-    #     lg.TestScenario.Offline: QueueRunner
-    # }
-    # runner = runner_map[scenario](model, ds, args.threads, post_proc=post_proc, max_batchsize=args.max_batchsize)
 
     def issue_queries(query_samples):
         global so
         idx = np.array([q.index for q in query_samples])
         query_id = [q.id for q in query_samples]
-        so.IssueQuery(len(idx), idx)
+        processed_results = so.IssueQuery(len(idx), idx)
+        processed_results = json.loads(processed_results.decode('utf-8'))
+        response_array_refs = []
+        response = []
+        for idx, qid in enumerate(query_id):
+            response_array = array.array("B", np.array(processed_results[idx], np.float32).tobytes())
+            response_array_refs.append(response_array)
+            bi = response_array.buffer_info()
+            response.append(lg.QuerySampleResponse(qid, bi[0], bi[1]))
+        lg.QuerySamplesComplete(response)
 
     def flush_queries():
         pass
@@ -565,6 +320,18 @@ def main():
         # called by loadgen to show us the recorded latencies
         global last_timeing
         last_timeing = [t / NANO_SEC for t in latencies_ns]
+
+    def load_query_samples(sample_list):
+        global so
+        err = go_load_query_samples(sample_list, so)
+        if (err != 'nil'):
+            raise RuntimeError('load query samples failed')
+
+    def unload_query_samples(sample_list):
+        global so
+        err = go_unload_query_samples(sample_list, so)
+        if (err != 'nil'):
+            raise RuntimeError('unload query samples failed')
 
     settings = lg.TestSettings()
     settings.FromConfig(mlperf_conf, args.model_name, args.scenario)
@@ -596,34 +363,37 @@ def main():
         settings.server_target_latency_ns = int(args.max_latency * NANO_SEC)
         settings.multi_stream_target_latency_ns = int(args.max_latency * NANO_SEC)
 
-
     sut = lg.ConstructSUT(issue_queries, flush_queries, process_latencies)
-    qsl = lg.ConstructQSL(count, min(count, 500), ds.load_query_samples, ds.unload_query_samples)
+    qsl = lg.ConstructQSL(count, min(count, 500), load_query_samples, unload_query_samples)
 
     log.info("starting {}".format(scenario))
     result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
-    # runner.start_run(result_dict, args.accuracy)
     lg.StartTest(sut, qsl, settings)
 
-    if not last_timeing:
-        last_timeing = runner.result_timing
-    if args.accuracy:
-        post_proc.finalize(result_dict, ds, output_dir=args.output)
-    add_results(final_results, "{}".format(scenario),
-                result_dict, last_timeing, time.time() - ds.last_loaded, args.accuracy)
+    # if not last_timeing:
+    #     last_timeing = runner.result_timing
+    # if args.accuracy:
+    #     post_proc.finalize(result_dict, ds, output_dir=args.output)
+    # add_results(final_results, "{}".format(scenario),
+    #             result_dict, last_timeing, time.time() - ds.last_loaded, args.accuracy)
 
-    runner.finish()
+    # runner.finish()
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
 
+    """
+    Python signature
+    go_finalize(so)
+    """
+    err = go_finalize(so)
+    if (err != 'nil'):
+        raise RuntimeError('finialize in go failed')
 
     # write final results
 
-    if args.output:
-        with open("results.json", "w") as f:
-            json.dump(final_results, f, sort_keys=True, indent=4)
-
-
+    # if args.output:
+    #     with open("results.json", "w") as f:
+    #         json.dump(final_results, f, sort_keys=True, indent=4)
 
 
 # load MLModelScope go wrapper shared libraby

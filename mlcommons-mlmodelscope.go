@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl/dataset"
 	"github.com/c3sr/mlcommons-mlmodelscope/sut"
@@ -108,9 +107,7 @@ func warmup() error {
 	}
 
 	for ii := 0; ii < 5; ii++ {
-		if _, err := mlmodelscopeSUT.ProcessQuery(issueCtx, data); err != nil {
-			return err
-		}
+		mlmodelscopeSUT.ProcessQuery(issueCtx, data, []int{0})
 	}
 
 	if err := UnloadQuerySamples([]int{}); err != nil {
@@ -122,7 +119,7 @@ func warmup() error {
 }
 
 // TODO: What do we want to return to python?
-func IssueQuery(sampleList []int) ([]dl.Features, error) {
+func IssueQuery(sampleList []int) string {
 	issueSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
@@ -135,10 +132,10 @@ func IssueQuery(sampleList []int) ([]dl.Features, error) {
 
 	data, err := mlmodelscopeQSL.GetSamples(sampleList)
 	if err != nil {
-		return nil, err
+		return "[[]]"
 	}
 
-	return mlmodelscopeSUT.ProcessQuery(issueCtx, data)
+	return mlmodelscopeSUT.ProcessQuery(issueCtx, data, sampleList)
 }
 
 func LoadQuerySamples(sampleList []int) error {
@@ -153,7 +150,7 @@ func InfoModels(backendName string) error {
 	return sut.InfoModels(backendName)
 }
 
-// This needs to be call once from the python side in the end
+// This needs to be called once from the python side in the end
 func Finalize() error {
 	mlmodelscopeSUT.Close()
 	rootSpan.Finish()
