@@ -78,10 +78,14 @@ func Initialize(backendName string, modelName string, modelVersion string,
 		return 0, fmt.Errorf("Please give a batchsize between 1 and 128, right now is %d.", batchSize)
 	}
 
+	if err := warmup(); err != nil {
+		return 0, nil
+	}
+
 	return mlmodelscopeQSL.GetItemCount(), nil
 }
 
-func Warmup() error {
+func warmup() error {
 	wamupSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,

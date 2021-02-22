@@ -35,8 +35,6 @@ func TestImageNet(t *testing.T) {
 		t.Error(err)
 	}
 
-	Warmup()
-
 	if err := LoadQuerySamples([]int{0, 1, 2, 3, 4, 5, 6, 7}); err != nil {
 		t.Error(err)
 	}
@@ -72,8 +70,6 @@ func TestCoco(t *testing.T) {
 		"coco", "", 0, false, "FULL_TRACE", 1); err != nil {
 		t.Error(err)
 	}
-
-	Warmup()
 
 	if err := LoadQuerySamples([]int{0, 1, 2, 3, 4, 5, 6, 7}); err != nil {
 		t.Error(err)

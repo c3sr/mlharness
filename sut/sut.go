@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-  "reflect"
+	"reflect"
 
 	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/dlframework/framework/agent"
@@ -209,7 +209,7 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}) ([]dl.Featur
 
 	for i, d := range imageParts {
 
-    reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(len(d))
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(len(d))
 
 		input <- d
 		for j := 0; j < len(d); j++ {

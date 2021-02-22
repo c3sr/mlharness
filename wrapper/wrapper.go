@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"unsafe"
 
 	base "github.com/c3sr/mlcommons-mlmodelscope"
 )
@@ -22,6 +23,58 @@ func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
 		return C.CString(fmt.Sprintf("0, %s", err.Error()))
 	}
 	return C.CString(fmt.Sprintf("%d, nil", sz))
+}
+
+//export LoadQuerySamples
+func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
+	len := int(cLen)
+	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
+	sampleList := make([]int, len)
+
+	for i := 0; i < len; i++ {
+		sampleList[i] = int(slice[i])
+	}
+
+	if err := base.LoadQuerySamples(sampleList); err != nil {
+		return C.CString(err.Error())
+	}
+
+	return C.CString("")
+}
+
+//export UnloadQuerySamples
+func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
+	len := int(cLen)
+	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
+	sampleList := make([]int, len)
+
+	for i := 0; i < len; i++ {
+		sampleList[i] = int(slice[i])
+	}
+
+	if err := base.UnloadQuerySamples(sampleList); err != nil {
+		return C.CString(err.Error())
+	}
+
+	return C.CString("")
+}
+
+//export Finalize
+func Finalize() *C.char {
+	if err := base.Finalize(); err != nil {
+		return C.CString(err.Error())
+	}
+
+	return C.CString("")
+}
+
+//export InfoModels
+func InfoModels(cBackendName *C.char) *C.char {
+	if err := base.InfoModels(C.GoString(cBackendName)); err != nil {
+		return C.CString(err.Error())
+	}
+
+	return C.CString("")
 }
 
 func main() {}
