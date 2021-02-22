@@ -217,7 +217,7 @@ def load_go_shared_library():
     https://numpy.org/devdocs/user/basics.types.html
     """
     so.IssueQuery.restype = c_char_p
-    so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
     Go Function Signature
@@ -238,14 +238,14 @@ def load_go_shared_library():
     func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
     """
     so.LoadQuerySamples.restype = c_char_p
-    so.LoadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.LoadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
     Go Function Signature
     func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
     """
     so.UnloadQuerySamples.restype = c_char_p
-    so.UnloadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.UnloadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     return so
 
