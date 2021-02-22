@@ -416,8 +416,9 @@ def parse_ret_msg(ret_msg):
     count = int(count)
     return count, err
 
-def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
+def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize):
     # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
+    global so
     if dataset_list is None:
         dataset_list = ""
     if model_name is None:
@@ -440,6 +441,7 @@ def initialize_sut(dataset, dataset_list, backend, model_name, model_version, co
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
                                                 c_char_p(dataset), c_char_p(dataset_list),
                                                 c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
+    ret_msg = ret_msg.decode('utf-8')
     count, err = parse_ret_msg(ret_msg)
     return count, err
 
@@ -512,7 +514,7 @@ def main():
     """
     # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
     count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name, 
-                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
+                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize)
 
     if (err != 'nil'):
         raise RuntimeError('SUT initialization failed')
