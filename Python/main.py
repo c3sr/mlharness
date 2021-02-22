@@ -37,6 +37,8 @@ SCENARIO_MAP = {
 }
 
 last_timeing = []
+result_timeing = []
+last_loaded = -1
 
 TRACE_LEVEL = ("APPLICATION_TRACE",
                 "MODEL_TRACE",          # pipelines within model
@@ -88,7 +90,7 @@ def get_args():
     # MLModelScope Parameters
     parser.add_argument("--use-gpu", type=int, default=0, help="enable gpu for inference")
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, help="MLModelScope Trace Level")
-    parser.add_argument("--model-version", help="MLModelScope Trace Level")
+    parser.add_argument("--model-version", help="version of the model used in MLModelScope")
 
     args = parser.parse_args()
 
@@ -146,7 +148,7 @@ def add_results(final_results, name, result_dict, result_list, took, show_accura
 def parse_ret_msg(ret_msg):
     count, err = ret_msg.split(',', 1)
     count = int(count)
-    return count, err
+    return count, err.lstrip()
 
 def go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
     # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
@@ -178,18 +180,18 @@ def go_initialize(dataset, dataset_list, backend, model_name, model_version, cou
     return count, err
 
 def go_load_query_samples(sample_list, so):
-    sample_list = np.array(sample_list)
+    sample_list = np.array(sample_list).astype(np.int32)
     ret_msg = so.LoadQuerySamples(len(sample_list), sample_list)
     return ret_msg.decode('utf-8')
 
-def go_unload_query_samples(sample_list):
+def go_unload_query_samples(sample_list, so):
     if sample_list is None:
         sample_list = []
-    sample_list = np.array(sample_list)
+    sample_list = np.array(sample_list).astype(np.int32)
     ret_msg = so.UnloadQuerySamples(len(sample_list), sample_list)
     return ret_msg.decode('utf-8')
 
-def go_finalize():
+def go_finalize(so):
   ret_msg = so.Finalize()
   return ret_msg.decode('utf-8')
 
@@ -249,6 +251,8 @@ def main():
 
     global so
     global last_timeing
+    global last_loaded
+    global result_timeing
 
     args = get_args()
 
@@ -275,7 +279,7 @@ def main():
     Python signature
     go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so)
     """
-    count, err = go_initialize_sut(args.dataset, args.dataset_list, backend, args.model_name,
+    count, err = go_initialize(args.dataset, args.dataset_list, backend, args.model_name,
                     args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
 
     if (err != 'nil'):
@@ -300,9 +304,13 @@ def main():
 
     def issue_queries(query_samples):
         global so
-        idx = np.array([q.index for q in query_samples])
+        global last_timeing
+        global result_timeing
+        idx = np.array([q.index for q in query_samples]).astype(np.int32)
         query_id = [q.id for q in query_samples]
+        start = time.time()
         processed_results = so.IssueQuery(len(idx), idx)
+        result_timeing.append(time.time() - start)
         processed_results = json.loads(processed_results.decode('utf-8'))
         response_array_refs = []
         response = []
@@ -323,14 +331,16 @@ def main():
 
     def load_query_samples(sample_list):
         global so
+        global last_loaded
         err = go_load_query_samples(sample_list, so)
-        if (err != 'nil'):
+        last_loaded = time.time()
+        if (err != ''):
             raise RuntimeError('load query samples failed')
 
     def unload_query_samples(sample_list):
         global so
         err = go_unload_query_samples(sample_list, so)
-        if (err != 'nil'):
+        if (err != ''):
             raise RuntimeError('unload query samples failed')
 
     settings = lg.TestSettings()
@@ -370,12 +380,12 @@ def main():
     result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
     lg.StartTest(sut, qsl, settings)
 
-    # if not last_timeing:
-    #     last_timeing = runner.result_timing
+    if not last_timeing:
+        last_timeing = result_timeing
     # if args.accuracy:
     #     post_proc.finalize(result_dict, ds, output_dir=args.output)
-    # add_results(final_results, "{}".format(scenario),
-    #             result_dict, last_timeing, time.time() - ds.last_loaded, args.accuracy)
+    add_results(final_results, "{}".format(scenario),
+                result_dict, last_timeing, time.time() - last_loaded, args.accuracy)
 
     # runner.finish()
     lg.DestroyQSL(qsl)
@@ -386,7 +396,7 @@ def main():
     go_finalize(so)
     """
     err = go_finalize(so)
-    if (err != 'nil'):
+    if (err != ''):
         raise RuntimeError('finialize in go failed')
 
     # write final results

@@ -78,7 +78,7 @@ func Initialize(backendName string, modelName string, modelVersion string,
 	}
 
 	if err := warmup(); err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	return mlmodelscopeQSL.GetItemCount(), nil
