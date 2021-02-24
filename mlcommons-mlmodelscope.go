@@ -118,7 +118,6 @@ func warmup() error {
 	return nil
 }
 
-// TODO: What do we want to return to python?
 func IssueQuery(sampleList []int) string {
 	issueSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
