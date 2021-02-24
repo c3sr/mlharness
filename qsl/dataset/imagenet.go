@@ -61,7 +61,7 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 
 		labelInt, err := strconv.Atoi(label)
 		if err != nil {
-			return nil, fmt.Errorf("Can't convert %s into an interger.", label)
+			return nil, fmt.Errorf("Can't convert %s into an integer.", label)
 		}
 
 		res.names = append(res.names, imageName)

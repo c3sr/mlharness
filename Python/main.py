@@ -40,7 +40,8 @@ last_timeing = []
 result_timeing = []
 last_loaded = -1
 
-TRACE_LEVEL = ("APPLICATION_TRACE",
+TRACE_LEVEL = ( "NO_TRACE",
+                "APPLICATION_TRACE",
                 "MODEL_TRACE",          # pipelines within model
                 "FRAMEWORK_TRACE",      # layers within framework
                 "ML_LIBRARY_TRACE",     # cudnn, ...
@@ -89,7 +90,7 @@ def get_args():
 
     # MLModelScope Parameters
     parser.add_argument("--use-gpu", type=int, default=0, help="enable gpu for inference")
-    parser.add_argument("--trace-level", choices=TRACE_LEVEL, help="MLModelScope Trace Level")
+    parser.add_argument("--trace-level", choices=TRACE_LEVEL, default="NO_TRACE", help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="version of the model used in MLModelScope")
     parser.add_argument("--info-models", action="store_true", help="list the models under the specified backend")
 
@@ -295,6 +296,7 @@ def main():
                     args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
 
     if (err != 'nil'):
+        print(err)
         raise RuntimeError('initialization in go failed')
 
     mlperf_conf = os.path.abspath(args.mlperf_conf)
@@ -347,12 +349,14 @@ def main():
         err = go_load_query_samples(sample_list, so)
         last_loaded = time.time()
         if (err != ''):
+            print(err)
             raise RuntimeError('load query samples failed')
 
     def unload_query_samples(sample_list):
         global so
         err = go_unload_query_samples(sample_list, so)
         if (err != ''):
+            print(err)
             raise RuntimeError('unload query samples failed')
 
     settings = lg.TestSettings()
@@ -409,6 +413,7 @@ def main():
     """
     err = go_finalize(so)
     if (err != ''):
+        print(err)
         raise RuntimeError('finialize in go failed')
 
     # write final results
