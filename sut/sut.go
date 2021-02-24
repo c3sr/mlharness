@@ -231,8 +231,9 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList [
 	switch modelModality {
 	case "image_classification":
 		resSlice := make([][]float32, len(data))
+    len1001 := int32(len(res[0]) - 1000)
 		for i := 0; i < len(data); i++ {
-			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex())}
+			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex() - len1001)}
 		}
 		resJSON, _ := json.Marshal(resSlice)
 		return string(resJSON)
@@ -240,10 +241,6 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList [
 		resSlice := make([][][]float32, len(data))
 		for i := 0; i < len(data); i++ {
 			for _, f := range res[i] {
-				// hard coded, maybe need to be added into model manifest
-				if f.GetProbability() < 0.5 {
-					break
-				}
 				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(),
 					f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
 			}

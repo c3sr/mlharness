@@ -30,7 +30,7 @@ func TestInfoModels(t *testing.T) {
 func TestImageNet(t *testing.T) {
 	pwd, _ := os.Getwd()
 	os.Setenv("DATA_DIR", filepath.Join(pwd, "qsl/dataset/_fixtures/fake_imagenet"))
-	if _, err := Initialize("pytorch", "torchvision_alexnet", "1.0",
+	if _, err := Initialize("tensorflow", "MLPerf_ResNet50_v1.5", "1.0",
 		"imagenet", "", 10, false, "FULL_TRACE", 3); err != nil {
 		t.Error(err)
 	}

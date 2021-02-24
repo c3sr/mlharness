@@ -154,5 +154,9 @@
   name = "github.com/stretchr/testify"
   version = "=1.6.1"
 
+[[override]]
+  name = "github.com/c3sr/onnxruntime"
+  version = "0.0.8"
+
 [prune]
   go-tests = true
