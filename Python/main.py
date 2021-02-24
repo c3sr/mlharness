@@ -54,7 +54,7 @@ def get_args():
     parser.add_argument("--dataset-list", help="path to the dataset list")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
-    # in MLPerf the default max-batchsize value is 128, but in MLModelScope lots of model can only support size of 1
+    # in MLPerf the default max-batchsize value is 128, but in Onnxruntime lots of model can only support size of 1
     parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
     parser.add_argument("--output", help="test results")
     parser.add_argument("--backend", help="runtime to use")
@@ -91,6 +91,7 @@ def get_args():
     parser.add_argument("--use-gpu", type=int, default=0, help="enable gpu for inference")
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="version of the model used in MLModelScope")
+    parser.add_argument("--info-models", help="list the models under the specified backend")
 
     args = parser.parse_args()
 
@@ -195,6 +196,11 @@ def go_finalize(so):
   ret_msg = so.Finalize()
   return ret_msg.decode('utf-8')
 
+def go_info_models(backend, so):
+  backend = backend.encode('utf-8')
+  ret_msg = so.InfoModels(backend)
+  return ret_msg.decode('utf-8')
+
 def load_go_shared_library():
 
     so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
@@ -260,6 +266,12 @@ def main():
 
     # find backend
     backend = get_backend(args.backend)
+
+    if args.info_models:
+      err = so.go_info_models(backend, so)
+      if err != ''
+        print(err)
+      return
 
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
