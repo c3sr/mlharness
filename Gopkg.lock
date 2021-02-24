@@ -380,15 +380,15 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:82bea58f3830254ebda7e156d1e27bb66293f1804454b716d047562d74226490"
+  digest = "1:4a96849988422f8acca4cd4e446b8076b7089f7017926b4d6b1380f3a94a8ceb"
   name = "github.com/c3sr/onnxruntime"
   packages = [
     ".",
     "predictor",
   ]
   pruneopts = "T"
-  revision = "227da89e47a6c233586c0633bd14f2f23b716f84"
-  version = "v0.0.8"
+  revision = "4a0cc60f47c75d04260faf905c5b3a28097dd1b9"
+  version = "v0.0.10"
 
 [[projects]]
   digest = "1:b0b3436cfe60efde32d6b187ec7c9c4c3e401590d6b264eb640df287441114dd"

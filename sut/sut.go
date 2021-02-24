@@ -241,8 +241,8 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList [
 		resSlice := make([][][]float32, len(data))
 		for i := 0; i < len(data); i++ {
 			for _, f := range res[i] {
-				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(),
-					f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
+				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(),
+					f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
 			}
 		}
 		resJSON, _ := json.Marshal(resSlice)

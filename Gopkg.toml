@@ -156,7 +156,7 @@
 
 [[override]]
   name = "github.com/c3sr/onnxruntime"
-  version = "0.0.8"
+  version = "0.0.10"
 
 [prune]
   go-tests = true
