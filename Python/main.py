@@ -319,8 +319,12 @@ def main():
     #     output_dir = os.path.abspath(args.output)
     #     os.makedirs(output_dir, exist_ok=True)
     #     os.chdir(output_dir)
+
+    log_dir = None
+
     if args.log_dir:
-        os.makedirs(args.log_dir, exist_ok=True)
+        log_dir = os.path.abspath(args.log_dir)
+        os.makedirs(log_dir, exist_ok=True)
 
     scenario = SCENARIO_MAP[args.scenario]
 
@@ -421,12 +425,12 @@ def main():
         accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
                         'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py')}
         accuracy_script_path = accuracy_script_paths[args.dataset]
+        accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
+        data_dir = os.environ['DATA_DIR']
         if args.dataset == 'coco':
-            subprocess.check_call(['python3', accuracy_script_path, '--mlperf-accuracy-file', 'mlperf_log_accuracy.json',
-                                    '--coco-dir', '$DATA_DIR', '--verbose'], shell=True)
+            subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
         else:   # imagenet
-            subprocess.check_call(['python3', accuracy_script_path, '--mlperf-accuracy-file', 'mlperf_log_accuracy.json',
-                                    '--imagenet-val-file', '$DATA_DIR/val_map.txt'], shell=True)
+            subprocess.check_call('python3 {} --mlperf-accuracy-file {} --imagenet-val-file {}'.format(accuracy_script_path, accuracy_file_path, os.path.join(data_dir, 'val_map.txt')), shell=True)
     # runner.finish()
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
