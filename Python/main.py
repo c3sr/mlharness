@@ -16,7 +16,7 @@ import sys
 import threading
 import time
 from queue import Queue
-
+import subprocess
 import mlperf_loadgen as lg
 import numpy as np
 
@@ -51,13 +51,12 @@ TRACE_LEVEL = ( "NO_TRACE",
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", help="dataset")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet'], help="dataset")
     parser.add_argument("--dataset-list", help="path to the dataset list")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
     # in MLPerf the default max-batchsize value is 128, but in Onnxruntime lots of model can only support size of 1
     parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
-    parser.add_argument("--output", help="test results")
     parser.add_argument("--backend", help="runtime to use")
     parser.add_argument("--model-name", help="name of the mlperf model, ie. resnet50")
     parser.add_argument("--qps", type=int, help="target qps")
@@ -68,7 +67,8 @@ def get_args():
     parser.add_argument("--mlperf_conf", default="../inference/mlperf.conf", help="mlperf rules config")
     # file for user LoadGen settings such as target QPS
     parser.add_argument("--user_conf", default="../inference/vision/classification_and_detection/user.conf", help="user config for user LoadGen settings such as target QPS")
-
+    # log path for loadgen
+    parser.add_argument("--log_dir", default='../logs')
 
     # unused arguments from MLPerf
     # parser.add_argument("--dataset-path", required=True, help="path to the dataset")
@@ -79,6 +79,7 @@ def get_args():
     # parser.add_argument("--outputs", help="model outputs")
     # parser.add_argument("--threads", default=os.cpu_count(), type=int, help="threads")
     # parser.add_argument("--cache", type=int, default=0, help="use cache")
+    # parser.add_argument("--output", help="test results")
 
 
     # below will override mlperf rules compliant settings - don't use for official submission
@@ -152,8 +153,10 @@ def parse_ret_msg(ret_msg):
     count = int(count)
     return count, err.lstrip()
 
-def go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so):
+
+def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize):
     # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
+    global so
     if dataset_list is None:
         dataset_list = ""
     if model_name is None:
@@ -222,7 +225,7 @@ def load_go_shared_library():
     https://numpy.org/devdocs/user/basics.types.html
     """
     so.IssueQuery.restype = c_char_p
-    so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
     Go Function Signature
@@ -243,14 +246,14 @@ def load_go_shared_library():
     func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
     """
     so.LoadQuerySamples.restype = c_char_p
-    so.LoadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.LoadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
     Go Function Signature
     func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char
     """
     so.UnloadQuerySamples.restype = c_char_p
-    so.UnloadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.intc)]
+    so.UnloadQuerySamples.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     return so
 
@@ -292,8 +295,11 @@ def main():
     Python signature
     go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so)
     """
-    count, err = go_initialize(args.dataset, args.dataset_list, backend, args.model_name,
-                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize, so)
+
+    # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
+    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name, 
+                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize)
+
 
     if (err != 'nil'):
         print(err)
@@ -309,10 +315,10 @@ def main():
         log.error("{} not found".format(user_conf))
         sys.exit(1)
 
-    if args.output:
-        output_dir = os.path.abspath(args.output)
-        os.makedirs(output_dir, exist_ok=True)
-        os.chdir(output_dir)
+    # if args.output:
+    #     output_dir = os.path.abspath(args.output)
+    #     os.makedirs(output_dir, exist_ok=True)
+    #     os.chdir(output_dir)
 
     scenario = SCENARIO_MAP[args.scenario]
 
@@ -394,15 +400,31 @@ def main():
 
     log.info("starting {}".format(scenario))
     result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
-    lg.StartTest(sut, qsl, settings)
 
+    log_path = os.path.realpath(args.log_dir)
+    log_output_settings = lg.LogOutputSettings()
+    log_output_settings.outdir = log_path
+    log_output_settings.copy_summary_to_stdout = True
+    log_settings = lg.LogSettings()
+    log_settings.log_output = log_output_settings
+    # log_settings.enable_trace = True
+    # lg.StartTest(sut, qsl, settings)
+    lg.StartTestWithLogSettings(sut, qsl, settings, log_settings)
+    
     if not last_timeing:
         last_timeing = result_timeing
-    # if args.accuracy:
-    #     post_proc.finalize(result_dict, ds, output_dir=args.output)
-    add_results(final_results, "{}".format(scenario),
-                result_dict, last_timeing, time.time() - last_loaded, args.accuracy)
 
+
+    if args.accuracy:
+        accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
+                        'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py')}
+        accuracy_script_path = accuracy_script_paths[args.dataset]
+        if args.dataset == 'coco':
+            subprocess.check_call(['python3', accuracy_script_path, '--mlperf-accuracy-file', 'mlperf_log_accuracy.json',
+                                    '--coco-dir', '$DATA_DIR', '--verbose'], shell=True)
+        else:   # imagenet
+            subprocess.check_call(['python3', accuracy_script_path, '--mlperf-accuracy-file', 'mlperf_log_accuracy.json',
+                                    '--imagenet-val-file', '$DATA_DIR/val_map.txt'], shell=True)
     # runner.finish()
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
@@ -416,11 +438,7 @@ def main():
         print(err)
         raise RuntimeError('finialize in go failed')
 
-    # write final results
 
-    # if args.output:
-    #     with open("results.json", "w") as f:
-    #         json.dump(final_results, f, sort_keys=True, indent=4)
 
 
 # load MLModelScope go wrapper shared libraby
