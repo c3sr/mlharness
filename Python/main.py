@@ -317,6 +317,8 @@ def main():
     #     output_dir = os.path.abspath(args.output)
     #     os.makedirs(output_dir, exist_ok=True)
     #     os.chdir(output_dir)
+    if args.log_dir:
+        os.makedirs(output_dir, exist_ok=True)
 
     scenario = SCENARIO_MAP[args.scenario]
 
