@@ -91,7 +91,7 @@ def get_args():
     parser.add_argument("--use-gpu", type=int, default=0, help="enable gpu for inference")
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="version of the model used in MLModelScope")
-    parser.add_argument("--info-models", help="list the models under the specified backend")
+    parser.add_argument("--info-models", action="store_true", help="list the models under the specified backend")
 
     args = parser.parse_args()
 
@@ -268,8 +268,8 @@ def main():
     backend = get_backend(args.backend)
 
     if args.info_models:
-      err = so.go_info_models(backend, so)
-      if err != ''
+      err = go_info_models(backend, so)
+      if (err != ''):
         print(err)
       return
 
