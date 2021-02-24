@@ -297,7 +297,7 @@ def main():
     """
 
     # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
-    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name, 
+    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name,
                     args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize)
 
 
@@ -320,7 +320,7 @@ def main():
     #     os.makedirs(output_dir, exist_ok=True)
     #     os.chdir(output_dir)
     if args.log_dir:
-        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(args.log_dir, exist_ok=True)
 
     scenario = SCENARIO_MAP[args.scenario]
 
@@ -412,7 +412,7 @@ def main():
     # log_settings.enable_trace = True
     # lg.StartTest(sut, qsl, settings)
     lg.StartTestWithLogSettings(sut, qsl, settings, log_settings)
-    
+
     if not last_timeing:
         last_timeing = result_timeing
 
