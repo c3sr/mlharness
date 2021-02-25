@@ -50,7 +50,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.2/cmake-3.19.2
   ./bootstrap && make && make install && \
   cd .. && rm -fr cmake-3.19.2* && cmake --version
 
-RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
+RUN git clone --single-branch --depth 1 --branch 1.7.0 --recursive https://github.com/apache/incubator-mxnet mxnet
 
 RUN cd mxnet && \
     mkdir -p /opt/mxnet/lib && \
