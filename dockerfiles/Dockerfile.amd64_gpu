@@ -6,7 +6,7 @@ WORKDIR /opt
 ### Dependencies ###
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev libopencv-dev tzdata ninja-build && \
+    libssl-dev libopencv-dev libgoogle-glog-dev tzdata ninja-build && \
     rm -rf /var/lib/apt/lists/*
 
 RUN ln -fs /usr/share/zoneinfo/America/Chicago /etc/localtime && \
@@ -94,3 +94,7 @@ RUN cd / && rm -fr onnxruntime
 
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/onnxruntime/lib
 ENV LIBRARY_PATH $LIBRARY_PATH:/opt/onnxruntime/lib
+
+### Get rid of cuda which is only for compiling ###
+ENV LD_LIBRARY_PATH  /usr/local/cuda/extras/CUPTI/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/libtorch/lib:/opt/tensorflow/lib:/opt/mxnet/lib:/opt/onnxruntime/lib

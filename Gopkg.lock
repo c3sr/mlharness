@@ -213,7 +213,7 @@
   revision = "8ec223752bfc2f65b7e37373a0ac0530ffb81509"
 
 [[projects]]
-  digest = "1:06e7cc9c95256a4df3b26d47d73cddd8b9f8c82f96d080f271eda1e9b8d9412c"
+  digest = "1:964af0676d595b42a97fadeca876d579ef702c1b702650aeea57287437a014d5"
   name = "github.com/c3sr/dlframework"
   packages = [
     ".",
@@ -225,8 +225,8 @@
     "steps",
   ]
   pruneopts = "T"
-  revision = "9be27d933cff058874db60661574b98643a32c1c"
-  version = "v0.3.9"
+  revision = "d551a8ad7a07c459d32b248d7e3f024f2337f3fc"
+  version = "v0.3.11"
 
 [[projects]]
   digest = "1:9e21cd54baed6b6f46a4c12869c7ee5d52b62f1575088a9afcb1c24d52a14443"
@@ -291,7 +291,7 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:49475d662c21062ff0142ba1019c2ec2d49c7c1ad087d83b61f7960ec5f8df3a"
+  digest = "1:90bf9f9cc3b13cb2a0367dc0cac3eaa117f58982271a7590146cb832c462388f"
   name = "github.com/c3sr/image"
   packages = [
     ".",
@@ -299,8 +299,8 @@
     "types",
   ]
   pruneopts = "T"
-  revision = "cd2dd6a9395abc49d8e7fa68056534c974e9d6b2"
-  version = "v0.1.0"
+  revision = "699c776581a138c49520c33c6f05baa1486b35ab"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:8959d6104b02640b16422651784ef238b5756a1622a883ae89076fc3bd3be615"
