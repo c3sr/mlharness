@@ -115,7 +115,6 @@ func (c *Coco) LoadQuerySamples(sampleList []int) error {
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
 		Then(steps.NewReadImage(c.preprocessOptions)).
-		Then(steps.NewCropDimension(c.preprocessOptions)).
 		Then(steps.NewPreprocessImage(c.preprocessOptions)).
 		Run(input)
 

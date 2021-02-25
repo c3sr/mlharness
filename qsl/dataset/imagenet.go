@@ -94,7 +94,6 @@ func (i *ImageNet) LoadQuerySamples(sampleList []int) error {
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
 		Then(steps.NewReadImage(i.preprocessOptions)).
-		Then(steps.NewCropDimension(i.preprocessOptions)).
 		Then(steps.NewPreprocessImage(i.preprocessOptions)).
 		Run(input)
 
