@@ -1,0 +1,96 @@
+FROM c3sr/base:amd64-gpu-latest
+MAINTAINER Yen-Hsiang Chang <yhchang3@illinois.edu>
+
+WORKDIR /opt
+
+### Dependencies ###
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl-dev libopencv-dev tzdata ninja-build && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -fs /usr/share/zoneinfo/America/Chicago /etc/localtime && \
+  dpkg-reconfigure --frontend noninteractive tzdata
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib64/stubs
+
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
+
+### PyTorch Installation ###
+### Handle libtorch issue ###
+# Refer to https://github.com/pytorch/pytorch/issues/27971 for more info
+ENV LRU_CACHE_CAPACITY=1
+
+RUN wget https://download.pytorch.org/libtorch/cu101/libtorch-cxx11-abi-shared-with-deps-1.5.0.zip && \
+    unzip libtorch-cxx11-abi-shared-with-deps-1.5.0.zip && \
+    rm libtorch-cxx11-abi-shared-with-deps-1.5.0.zip
+
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/libtorch/lib
+
+### TensorFlow Installation ###
+RUN wget https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-1.14.0.tar.gz
+
+RUN mkdir -p /opt/tensorflow && tar -C /opt/tensorflow -xzf libtensorflow-gpu-linux-x86_64-1.14.0.tar.gz
+
+RUN rm libtensorflow-gpu-linux-x86_64-1.14.0.tar.gz
+
+ENV CGO_CFLAGS="${CGO_CFLAGS} -I /opt/tensorflow/include"
+ENV CGO_CXXFLAGS="${CGO_CXXFLAGS} -I /opt/tensorflow/include"
+ENV CGO_LDFLAGS="${CGO_LDFLAGS} -L /opt/tensorflow/lib"
+
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/tensorflow/lib
+
+### Install MXNet ###
+### Update cmake version ###
+WORKDIR /
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.2/cmake-3.19.2.tar.gz && \
+  tar -xzvf cmake-3.19.2.tar.gz && \
+  cd cmake-3.19.2 && \
+  ./bootstrap && make && make install && \
+  cd .. && rm -fr cmake-3.19.2* && cmake --version
+
+RUN git clone --single-branch --depth 1 --branch $FRAMEWORK_VERSION --recursive https://github.com/apache/incubator-mxnet mxnet
+
+RUN cd mxnet && \
+    mkdir -p /opt/mxnet/lib && \
+    mkdir build && cd build && \
+    cmake -DUSE_CUDA=1 \
+    -DMXNET_CUDA_ARCH="7.0 7.5+PTX" \
+    -DUSE_CUDA_PATH=/usr/local/cuda \
+    -DUSE_CUDNN=1 -DUSE_CPP_PACKAGE=1 -DBUILD_CPP_EXAMPLES=0 -GNinja .. && \
+    ninja -v && \
+    mv ../include /opt/mxnet/ && \
+    mv libmxnet.so /opt/mxnet/lib/ && \
+    mv /mxnet/build/3rdparty/openmp/runtime/src/libomp.so /opt/mxnet/lib/ && \
+    cd / && \
+    rm -fr mxnet
+
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/mxnet/lib
+ENV LIBRARY_PATH $LIBRARY_PATH:/opt/mxnet/lib
+
+### Install Onnxruntime ###
+
+RUN apt-get update && apt-get install -y --no-install-recommends  \
+  gcc-8 \
+  g++-8 \
+  locales \
+  subversion \
+  && \
+  rm -rf /var/lib/apt/lists/* && \
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 80 --slave /usr/bin/g++ g++ /usr/bin/g++-8 && \
+  gcc --version && \
+  g++ --version
+
+RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8
+
+RUN git clone --single-branch --depth=1 --recurse-submodules --branch=v1.6.0 https://github.com/microsoft/onnxruntime.git && cd onnxruntime && \
+  git submodule update --init && \
+  ./build.sh --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_cuda --config Release --build_shared_lib --parallel --cmake_extra_defines CMAKE_INSTALL_PREFIX=/opt/onnxruntime/ --update --build && \
+  cd build/Linux/Release && \
+  make install
+
+RUN cd / && rm -fr onnxruntime
+
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/onnxruntime/lib
+ENV LIBRARY_PATH $LIBRARY_PATH:/opt/onnxruntime/lib
