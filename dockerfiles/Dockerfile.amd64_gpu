@@ -4,6 +4,7 @@ MAINTAINER Yen-Hsiang Chang <yhchang3@illinois.edu>
 WORKDIR /opt
 
 ### Dependencies ###
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev libopencv-dev tzdata ninja-build && \
     rm -rf /var/lib/apt/lists/*
@@ -11,7 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN ln -fs /usr/share/zoneinfo/America/Chicago /etc/localtime && \
   dpkg-reconfigure --frontend noninteractive tzdata
 
-ENV DEBIAN_FRONTEND=noninteractive
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/cuda/lib64/stubs
 
 RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
