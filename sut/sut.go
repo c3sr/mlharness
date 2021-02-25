@@ -231,7 +231,7 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList [
 	switch modelModality {
 	case "image_classification":
 		resSlice := make([][]float32, len(data))
-    len1001 := int32(len(res[0]) - 1000)
+		len1001 := int32(len(res[0]) - 1000)
 		for i := 0; i < len(data); i++ {
 			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex() - len1001)}
 		}

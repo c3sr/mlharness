@@ -29,6 +29,8 @@ log = logging.getLogger("main")
 NANO_SEC = 1e9
 MILLI_SEC = 1000
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 SCENARIO_MAP = {
     "SingleStream": lg.TestScenario.SingleStream,
     "MultiStream": lg.TestScenario.MultiStream,
