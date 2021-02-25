@@ -267,12 +267,12 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:a17d3a73d75312a98c9bfadb79acebb392c3745b68cca0c3d37ec337ef7ca480"
+  digest = "1:f293796ec11126731e249bfc89b3c17a410c6edd38d1881f0a54265ba0a30ddc"
   name = "github.com/c3sr/go-onnxruntime"
   packages = ["."]
   pruneopts = "T"
-  revision = "261ba6b395a17b0b0cd7a00f090ac9a46af1ecc3"
-  version = "v0.0.5"
+  revision = "1c3005e76e547fbc41fe4874f1d46811de58be1f"
+  version = "v0.0.6"
 
 [[projects]]
   digest = "1:f3f36f37b23f429801a8f5dabfdea42e3a077adad63be44c1a37c234180bf300"

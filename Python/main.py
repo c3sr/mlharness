@@ -48,6 +48,7 @@ TRACE_LEVEL = ( "NO_TRACE",
                 "SYSTEM_LIBRARY_TRACE", # cupti
                 "HARDWARE_TRACE",       # perf, papi, ...
                 "FULL_TRACE")           # includes all of the above)
+
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
@@ -58,7 +59,7 @@ def get_args():
     # in MLPerf the default max-batchsize value is 128, but in Onnxruntime lots of model can only support size of 1
     parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
     parser.add_argument("--backend", help="runtime to use")
-    parser.add_argument("--model-name", help="name of the mlperf model, ie. resnet50")
+    parser.add_argument("--model-name", help="name of the MLModelScope model, ie. TorchVision_Alexnet")
     parser.add_argument("--qps", type=int, help="target qps")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--find-peak-performance", action="store_true", help="enable finding peak performance pass")
@@ -114,47 +115,12 @@ def get_backend(backend):
     else:
         raise ValueError("unknown backend: " + backend)
 
-def add_results(final_results, name, result_dict, result_list, took, show_accuracy=False):
-    percentiles = [50., 80., 90., 95., 99., 99.9]
-    buckets = np.percentile(result_list, percentiles).tolist()
-    buckets_str = ",".join(["{}:{:.4f}".format(p, b) for p, b in zip(percentiles, buckets)])
-
-    if result_dict["total"] == 0:
-        result_dict["total"] = len(result_list)
-
-    # this is what we record for each run
-    result = {
-        "took": took,
-        "mean": np.mean(result_list),
-        "percentiles": {str(k): v for k, v in zip(percentiles, buckets)},
-        "qps": len(result_list) / took,
-        "count": len(result_list),
-        "good_items": result_dict["good"],
-        "total_items": result_dict["total"],
-    }
-    acc_str = ""
-    if show_accuracy:
-        result["accuracy"] = 100. * result_dict["good"] / result_dict["total"]
-        acc_str = ", acc={:.3f}%".format(result["accuracy"])
-        if "mAP" in result_dict:
-            result["mAP"] = 100. * result_dict["mAP"]
-            acc_str += ", mAP={:.3f}%".format(result["mAP"])
-
-    # add the result to the result dict
-    final_results[name] = result
-
-    # to stdout
-    print("{} qps={:.2f}, mean={:.4f}, time={:.3f}{}, queries={}, tiles={}".format(
-        name, result["qps"], result["mean"], took, acc_str,
-        len(result_list), buckets_str))
-
 def parse_ret_msg(ret_msg):
     count, err = ret_msg.split(',', 1)
     count = int(count)
     return count, err.lstrip()
 
-
-def initialize_sut(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize):
+def go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize):
     # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
     global so
     if dataset_list is None:
@@ -296,8 +262,7 @@ def main():
     go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so)
     """
 
-    # initialize_sut('imagenet', '', 'pytorch', 'torchvision_alexnet', '1.0', 0, 0, 'FULL_TRACE')
-    count, err = initialize_sut(args.dataset, args.dataset_list, backend, args.model_name,
+    count, err = go_initialize(args.dataset, args.dataset_list, backend, args.model_name,
                     args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize)
 
 
@@ -314,11 +279,6 @@ def main():
     if not os.path.exists(user_conf):
         log.error("{} not found".format(user_conf))
         sys.exit(1)
-
-    # if args.output:
-    #     output_dir = os.path.abspath(args.output)
-    #     os.makedirs(output_dir, exist_ok=True)
-    #     os.chdir(output_dir)
 
     log_dir = None
 
@@ -443,9 +403,6 @@ def main():
     if (err != ''):
         print(err)
         raise RuntimeError('finialize in go failed')
-
-
-
 
 # load MLModelScope go wrapper shared libraby
 so = load_go_shared_library()
