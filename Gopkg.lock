@@ -380,15 +380,15 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:4a96849988422f8acca4cd4e446b8076b7089f7017926b4d6b1380f3a94a8ceb"
+  digest = "1:09768cab88744d4284400c004b9fa1b756408eaf7a21649ba62dd8d8f5cdcec1"
   name = "github.com/c3sr/onnxruntime"
   packages = [
     ".",
     "predictor",
   ]
   pruneopts = "T"
-  revision = "4a0cc60f47c75d04260faf905c5b3a28097dd1b9"
-  version = "v0.0.10"
+  revision = "266ca4b8a1e9379aa26d4f0881e09c9cf7236111"
+  version = "v0.0.11"
 
 [[projects]]
   digest = "1:b0b3436cfe60efde32d6b187ec7c9c4c3e401590d6b264eb640df287441114dd"
@@ -439,7 +439,7 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:77c66efe94674ca62d794a59c5e1962ddc962b66ae8b20e6c8a77b4176242094"
+  digest = "1:d127017432fc20e48110118062838ea9e8cc6eeb111d16be08c07273ca72a5b7"
   name = "github.com/c3sr/tensorflow"
   packages = [
     ".",
@@ -447,8 +447,8 @@
     "predictor",
   ]
   pruneopts = "T"
-  revision = "a343dda5a3edefb578ff102a44c85f645f3d3c0a"
-  version = "v0.3.6"
+  revision = "7f835898dd4768f0184a5947f282111506d3ac22"
+  version = "v0.3.7"
 
 [[projects]]
   digest = "1:727edacac8c181a27f409a3a73d166b2ffaae6b64e85555d9da90c27c7f4ba61"

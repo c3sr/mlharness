@@ -160,7 +160,11 @@
 
 [[override]]
   name = "github.com/c3sr/onnxruntime"
-  version = "0.0.10"
+  version = "0.0.11"
+
+[[override]]
+  name = "github.com/c3sr/tensorflow"
+  version = "0.3.7"
 
 [prune]
   go-tests = true
