@@ -50,7 +50,7 @@ TRACE_LEVEL = ( "NO_TRACE",
                 "SYSTEM_LIBRARY_TRACE", # cupti
                 "HARDWARE_TRACE",       # perf, papi, ...
                 "FULL_TRACE")           # includes all of the above)
-
+BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
@@ -60,7 +60,7 @@ def get_args():
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
     # in MLPerf the default max-batchsize value is 128, but in Onnxruntime lots of model can only support size of 1
     parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
-    parser.add_argument("--backend", help="runtime to use")
+    parser.add_argument("--backend", choices=BACKENDS, help="runtime to use")
     parser.add_argument("--model-name", help="name of the MLModelScope model, ie. TorchVision_Alexnet")
     parser.add_argument("--qps", type=int, help="target qps")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
