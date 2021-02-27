@@ -16,6 +16,10 @@
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_ResNet50 | Image Classification | 131 | 332 |
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_ResNet101 | Image Classification | 95 | 268 |
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_ResNet152 | Image Classification | 75 | 222 |
+| raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_VGG11 | Image Classification | 158 | 339 |
+| raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_VGG13 | Image Classification | 148 | 291 |
+| raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_VGG16 | Image Classification | 137 | 256 |
+| raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | ONNX Runtime 1.6.0 | TorchVision_VGG19 | Image Classification | 126 | 229 |
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | PyTorch 1.5.0 | TorchVision_Alexnet | Image Classification | 148 | 474 |
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | PyTorch 1.5.0 | TorchVision_VGG_11 | Image Classification | 132 | 368 |
 | raider-01| Intel(R) Core(TM) i7-7820X CPU @ 3.60GHz | 1 | NVIDIA TITAN V | 1 | CUDA 10.2 | PyTorch 1.5.0 | TorchVision_ResNet_18 | Image Classification | 98 | 437 |
