@@ -12,16 +12,16 @@ import (
 	"github.com/c3sr/dlframework/framework/options"
 	common "github.com/c3sr/dlframework/framework/predictor"
 	"github.com/c3sr/dlframework/steps"
-	"github.com/c3sr/mxnet"
-	_ "github.com/c3sr/mxnet/predictor"
+	// "github.com/c3sr/mxnet"
+	// _ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
 	"github.com/c3sr/onnxruntime"
 	_ "github.com/c3sr/onnxruntime/predictor"
 	"github.com/c3sr/pipeline"
-	"github.com/c3sr/pytorch"
-	_ "github.com/c3sr/pytorch/predictor"
-	"github.com/c3sr/tensorflow"
-	_ "github.com/c3sr/tensorflow/predictor"
+	// "github.com/c3sr/pytorch"
+	// _ "github.com/c3sr/pytorch/predictor"
+	// "github.com/c3sr/tensorflow"
+	// _ "github.com/c3sr/tensorflow/predictor"
 	"github.com/c3sr/tracer"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -39,10 +39,10 @@ type backend struct {
 
 var (
 	supportedBackend = map[string]backend{
-		"pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
+		// "pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
 		"onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
-		"tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
-		"mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
+		// "tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
+		// "mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
 	defaultChannelBuffer = 100000
 )
@@ -151,7 +151,8 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n", model.MustCanonicalName())
 
 	if batchSize > 128 || batchSize < 1 {
-		fmt.Printf("Batchsize = %d is not supported, default to 128.\n", batchSize)
+		fmt.Printf("Batchsize = %d is not supported, default to 1.\n", batchSize)
+		batchSize = 1
 	}
 
 	return &SUT{
@@ -162,6 +163,15 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 
 func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
 	return s.predictor.GetPreprocessOptions()
+}
+
+func (s *SUT) GetPreprocessMethod() (string, error) {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "", fmt.Errorf("Unable to get preprocess method")
+	}
+
+	return modelManifest.GetPreprocess(), nil
 }
 
 func (s *SUT) Close() {
@@ -201,8 +211,14 @@ func InfoModels(backendName string) error {
 
 func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList []int) string {
 	input := make(chan interface{}, defaultChannelBuffer)
+
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
+
 	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
-		Then(steps.NewPredict(s.predictor)).
+		Then(steps.NewPredictGeneral(s.predictor, modelManifest.GetPostprocess())).
 		Run(input)
 
 	imageParts := dl.Partition(data, s.batchSize)
@@ -231,9 +247,8 @@ func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList [
 	switch modelModality {
 	case "image_classification":
 		resSlice := make([][]float32, len(data))
-		len1001 := int32(len(res[0]) - 1000)
 		for i := 0; i < len(data); i++ {
-			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex() - len1001)}
+			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex())}
 		}
 		resJSON, _ := json.Marshal(resSlice)
 		return string(resJSON)

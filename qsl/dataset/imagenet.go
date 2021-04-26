@@ -2,9 +2,7 @@ package dataset
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,15 +20,17 @@ type ImageNet struct {
 	dataPath          string
 	dataInMemory      map[int]interface{}
 	preprocessOptions common.PreprocessOptions
+	preprocessMethod  string
 }
 
-func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*ImageNet, error) {
+func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*ImageNet, error) {
 
 	start := time.Now()
 
 	res := &ImageNet{
 		dataPath:          dataPath,
 		preprocessOptions: preprocessOptions,
+		preprocessMethod:  preprocessMethod,
 	}
 
 	if imageList == "" {
@@ -93,17 +93,11 @@ func (i *ImageNet) LoadQuerySamples(sampleList []int) error {
 	input := make(chan interface{}, defaultChannelBuffer)
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
-		Then(steps.NewReadImage(i.preprocessOptions)).
-		Then(steps.NewPreprocessImage(i.preprocessOptions)).
+		Then(steps.NewPreprocessGeneral(i.preprocessOptions, i.preprocessMethod)).
 		Run(input)
 
 	for _, sample := range sampleList {
-		imageBytes, err := ioutil.ReadFile(i.getItemLocation(sample))
-		if err != nil {
-			return fmt.Errorf("Cannot read %s", i.getItemLocation(sample))
-		}
-
-		input <- bytes.NewBuffer(imageBytes)
+		input <- i.getItemLocation(sample)
 	}
 
 	close(input)

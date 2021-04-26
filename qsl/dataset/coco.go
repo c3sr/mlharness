@@ -1,7 +1,6 @@
 package dataset
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,15 +20,17 @@ type Coco struct {
 	dataPath          string
 	dataInMemory      map[int]interface{}
 	preprocessOptions common.PreprocessOptions
+	preprocessMethod  string
 }
 
-func NewCoco(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*Coco, error) {
+func NewCoco(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*Coco, error) {
 
 	start := time.Now()
 
 	res := &Coco{
 		dataPath:          dataPath,
 		preprocessOptions: preprocessOptions,
+		preprocessMethod:  preprocessMethod,
 	}
 
 	if imageList == "" {
@@ -114,17 +115,11 @@ func (c *Coco) LoadQuerySamples(sampleList []int) error {
 	input := make(chan interface{}, defaultChannelBuffer)
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
-		Then(steps.NewReadImage(c.preprocessOptions)).
-		Then(steps.NewPreprocessImage(c.preprocessOptions)).
+		Then(steps.NewPreprocessGeneral(c.preprocessOptions, c.preprocessMethod)).
 		Run(input)
 
 	for _, sample := range sampleList {
-		imageBytes, err := ioutil.ReadFile(c.getItemLocation(sample))
-		if err != nil {
-			return fmt.Errorf("Cannot read %s", c.getItemLocation(sample))
-		}
-
-		input <- bytes.NewBuffer(imageBytes)
+		input <- c.getItemLocation(sample)
 	}
 
 	close(input)

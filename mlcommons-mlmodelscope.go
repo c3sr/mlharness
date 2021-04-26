@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/c3sr/go-python3"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl/dataset"
 	"github.com/c3sr/mlcommons-mlmodelscope/sut"
@@ -27,11 +28,18 @@ var (
 		"HARDWARE_TRACE":       6,
 		"FULL_TRACE":           7,
 	}
+	pyState *python3.PyThreadState
 )
 
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
 	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
+
+	python3.Py_Initialize()
+	if !python3.Py_IsInitialized() {
+		return 0, fmt.Errorf("Error initializing the python interpreter")
+	}
+	pyState = python3.PyEval_SaveThread()
 
 	if _, ok := supportedTraceLevel[traceLevel]; !ok {
 		return 0, fmt.Errorf("%s is not a supported trace level", traceLevel)
@@ -62,24 +70,31 @@ func Initialize(backendName string, modelName string, modelVersion string,
 		return 0, err
 	}
 
+	preprocessMethod, err := mlmodelscopeSUT.GetPreprocessMethod()
+	if err != nil {
+		return 0, err
+	}
+
 	path := os.Getenv("DATA_DIR")
 
 	fmt.Println("Start initializing QSL...")
 
-	mlmodelscopeQSL, err = qsl.NewQSL(ctx, datasetName, path, imageList, count, opt)
+	mlmodelscopeQSL, err = qsl.NewQSL(ctx, datasetName, path, imageList, count, opt, preprocessMethod)
 	if err != nil {
 		return 0, err
 	}
 
 	fmt.Println("Finish initializing QSL...")
 
-	if batchSize < 1 || batchSize > 128 {
-		return 0, fmt.Errorf("Please give a batchsize between 1 and 128, right now is %d.", batchSize)
-	}
+	tracer.SetLevel(tracer.NO_TRACE)
 
 	if err := warmup(); err != nil {
 		return 0, err
 	}
+
+	tracer.SetLevel(tracer.LevelFromName(traceLevel))
+
+	fmt.Println(tracer.GetLevel())
 
 	return mlmodelscopeQSL.GetItemCount(), nil
 }
@@ -154,5 +169,6 @@ func Finalize() error {
 	mlmodelscopeSUT.Close()
 	rootSpan.Finish()
 	tracer.Close()
+	python3.PyEval_RestoreThread(pyState)
 	return nil
 }

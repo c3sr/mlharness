@@ -9,7 +9,7 @@ import (
 	"github.com/c3sr/tracer"
 )
 
-func NewQSL(ctx context.Context, datasetName string, dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (dataset.Dataset, error) {
+func NewQSL(ctx context.Context, datasetName string, dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (dataset.Dataset, error) {
 	initQSLSpan, ctx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
@@ -22,9 +22,9 @@ func NewQSL(ctx context.Context, datasetName string, dataPath string, imageList 
 
 	switch datasetName {
 	case "imagenet":
-		return dataset.NewImageNet(dataPath, imageList, count, preprocessOptions)
+		return dataset.NewImageNet(dataPath, imageList, count, preprocessOptions, preprocessMethod)
 	case "coco":
-		return dataset.NewCoco(dataPath, imageList, count, preprocessOptions)
+		return dataset.NewCoco(dataPath, imageList, count, preprocessOptions, preprocessMethod)
 	}
 
 	return nil, fmt.Errorf("%s dataset is not implemented", datasetName)
