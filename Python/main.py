@@ -147,8 +147,8 @@ def go_initialize(dataset, dataset_list, backend, model_name, model_version, cou
     trace_level = trace_level.encode('utf-8')
 
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
-                                                c_char_p(dataset), c_char_p(dataset_list),
-                                                c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
+                                             c_char_p(dataset), c_char_p(dataset_list),
+                                             c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
     count, err = parse_ret_msg(ret_msg.decode('utf-8'))
     return count, err
 
@@ -192,7 +192,7 @@ def load_go_shared_library():
     https://numpy.org/doc/stable/reference/routines.ctypeslib.html#module-numpy.ctypeslib
     https://numpy.org/devdocs/user/basics.types.html
     """
-    so.IssueQuery.restype = c_char_p
+    so.IssueQuery.restype = c_char_pß
     so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
@@ -393,7 +393,7 @@ def main():
             subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
         else:   # imagenet
             subprocess.check_call('python3 {} --mlperf-accuracy-file {} --imagenet-val-file {}'.format(accuracy_script_path, accuracy_file_path, os.path.join(data_dir, 'val_map.txt')), shell=True)
-    # runner.finish()
+
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
 

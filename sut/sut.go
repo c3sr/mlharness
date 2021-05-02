@@ -150,7 +150,7 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 
 	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n", model.MustCanonicalName())
 
-	if batchSize > 128 || batchSize < 1 {
+	if batchSize < 1 {
 		fmt.Printf("Batchsize = %d is not supported, default to 1.\n", batchSize)
 		batchSize = 1
 	}

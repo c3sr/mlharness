@@ -28,18 +28,24 @@ var (
 		"HARDWARE_TRACE":       6,
 		"FULL_TRACE":           7,
 	}
-	pyState *python3.PyThreadState
+	isSharedLibrary bool
+	pyState         *python3.PyThreadState
 )
 
 // This needs to be call once from the python side in the start
 func Initialize(backendName string, modelName string, modelVersion string,
 	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
 
-	python3.Py_Initialize()
-	if !python3.Py_IsInitialized() {
-		return 0, fmt.Errorf("Error initializing the python interpreter")
+	if python3.Py_IsInitialized() {
+		isSharedLibrary = true
+	} else {
+		isSharedLibrary = false
+		python3.Py_Initialize()
+		if !python3.Py_IsInitialized() {
+			return 0, fmt.Errorf("Error initializing the python interpreter")
+		}
+		pyState = python3.PyEval_SaveThread()
 	}
-	pyState = python3.PyEval_SaveThread()
 
 	if _, ok := supportedTraceLevel[traceLevel]; !ok {
 		return 0, fmt.Errorf("%s is not a supported trace level", traceLevel)
@@ -93,8 +99,6 @@ func Initialize(backendName string, modelName string, modelVersion string,
 	}
 
 	tracer.SetLevel(tracer.LevelFromName(traceLevel))
-
-	fmt.Println(tracer.GetLevel())
 
 	return mlmodelscopeQSL.GetItemCount(), nil
 }
@@ -169,6 +173,10 @@ func Finalize() error {
 	mlmodelscopeSUT.Close()
 	rootSpan.Finish()
 	tracer.Close()
-	python3.PyEval_RestoreThread(pyState)
+	if isSharedLibrary == false {
+		python3.PyEval_RestoreThread(pyState)
+    python3.Py_Finalize()
+	}
+
 	return nil
 }
