@@ -192,7 +192,7 @@ def load_go_shared_library():
     https://numpy.org/doc/stable/reference/routines.ctypeslib.html#module-numpy.ctypeslib
     https://numpy.org/devdocs/user/basics.types.html
     """
-    so.IssueQuery.restype = c_char_pß
+    so.IssueQuery.restype = c_char_p
     so.IssueQuery.argtypes = [c_int, np.ctypeslib.ndpointer(dtype=np.int32)]
 
     """
