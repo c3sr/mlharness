@@ -81,7 +81,7 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 		fmt.Printf("reduced image list, %d images not found.\n", notFound)
 	}
 
-	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
+	fmt.Printf("found %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
 
 	return res, nil
 

@@ -34,7 +34,7 @@ var (
 func Initialize(backendName string, modelName string, modelVersion string,
 	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
 
-  // Not from shared library
+	// Not from shared library
 	if !python3.Py_IsInitialized() {
 		python3.Py_Initialize()
 		if !python3.Py_IsInitialized() {

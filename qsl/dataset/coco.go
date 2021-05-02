@@ -104,7 +104,7 @@ func NewCoco(dataPath string, imageList string, count int, preprocessOptions com
 		fmt.Printf("reduced image list, %d images not found.\n", notFound)
 	}
 
-	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.names), elapsed.Seconds())
+	fmt.Printf("found %d images, took %.1f seconds.\n", len(res.names), elapsed.Seconds())
 
 	return res, nil
 }

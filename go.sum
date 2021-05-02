@@ -186,6 +186,7 @@ github.com/c3sr/go-onnxruntime v1.0.0 h1:mziIFjBUz6IkOuxhuwsm05w2h4hCex/OHOYVcN/
 github.com/c3sr/go-onnxruntime v1.0.0/go.mod h1:Sb7yFGIlXOWiISL4cMOg2gqqzPSQc34yAqxgHYAgwi8=
 github.com/c3sr/go-onnxruntime v1.1.1 h1:gaZEKB6dmyNbVP6d3+2hFqzuJT78BMtZz1fHtTNLjAI=
 github.com/c3sr/go-onnxruntime v1.1.1/go.mod h1:2az7na61hjVk+DmQc57i5UW/TBiGC5LVZntlM2bDLAM=
+github.com/c3sr/go-onnxruntime v1.1.2/go.mod h1:xdiyFYyXk1hGjFlKHgy5dxNJ6f0VPhqaJFeHvkmfK+8=
 github.com/c3sr/go-python3 v0.0.0-20210424014611-ae173b2e6908 h1:I7ZgyAAP+Y2k5bA1smp49mNWdme6seq0qz94L8xyJzU=
 github.com/c3sr/go-python3 v0.0.0-20210424014611-ae173b2e6908/go.mod h1:6rv4k8m/sCXIMEXPHGC5hG1Cgsl/mylZ5rbdhVfaoGQ=
 github.com/c3sr/go-pytorch v1.0.2 h1:ojl533foPmv4RpQ7J02Ckv5XzngX06Je6Y1TJ9dfgKs=
@@ -213,6 +214,8 @@ github.com/c3sr/onnxruntime v1.0.0 h1:SHA1N/u09oKvgPzAoEds7cVwfL7rx9M/7oqx+kSYAl
 github.com/c3sr/onnxruntime v1.0.0/go.mod h1:8esjHlSYFO1eUaLDhr5hILGY4D/qgMkKk+JrGoSYOE4=
 github.com/c3sr/onnxruntime v1.0.2-0.20210426041342-2cebad7eb8bb h1:ISV9v0gjwXg70r42GltzZI0AG+ibXPaECImKooLO4Dw=
 github.com/c3sr/onnxruntime v1.0.2-0.20210426041342-2cebad7eb8bb/go.mod h1:CrSm48x7/jh+HI051/Y41OYQE6u9a1NpL0WiRDI9FbQ=
+github.com/c3sr/onnxruntime v1.0.2-0.20210502215125-fbf4e43dff0b h1:Sc+CwdkjXfUxCDS3X+SjKaIms9Ld5ao8/yV2Rl2Kvy0=
+github.com/c3sr/onnxruntime v1.0.2-0.20210502215125-fbf4e43dff0b/go.mod h1:zphZJY7KrZJmCnwqcEk9qQI3BUgC18Yywk+RrjkY/vA=
 github.com/c3sr/parallel v1.0.1/go.mod h1:zDPGnYmqq3RunH2fNKbGwDNxI1i/8BFdqjGwYZ4yok8=
 github.com/c3sr/pipeline v1.0.0 h1:wGHKfNSyXVN78myEzvLeVNEuX94jsxA+Weyecy4SHCo=
 github.com/c3sr/pipeline v1.0.0/go.mod h1:1UcP7whVQqsxhLVyHz3IRZxtED5kSMucrQrQGjjNeVs=
