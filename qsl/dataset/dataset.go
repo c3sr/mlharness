@@ -7,6 +7,6 @@ var (
 type Dataset interface {
 	LoadQuerySamples([]int) error
 	UnloadQuerySamples([]int) error
-	GetSamples([]int) ([]interface{}, error)
+	GetSamples([]int) (map[int]interface{}, error)
 	GetItemCount() int
 }

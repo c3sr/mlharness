@@ -148,16 +148,13 @@ func (c *Coco) GetItemCount() int {
 	return len(c.labels)
 }
 
-func (c *Coco) GetSamples(sampleList []int) ([]interface{}, error) {
-	data := make([]interface{}, len(sampleList))
-	for ii, sample := range sampleList {
-		if val, ok := c.dataInMemory[sample]; ok {
-			data[ii] = val
-		} else {
+func (c *Coco) GetSamples(sampleList []int) (map[int]interface{}, error) {
+	for _, sample := range sampleList {
+		if _, exist := c.dataInMemory[sample]; !exist {
 			return nil, fmt.Errorf("sample id %d not loaded.", sample)
 		}
 	}
-	return data, nil
+	return c.dataInMemory, nil
 }
 
 func (c *Coco) getItemLocation(sample int) string {

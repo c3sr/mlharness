@@ -126,16 +126,13 @@ func (i *ImageNet) GetItemCount() int {
 	return len(i.labels)
 }
 
-func (i *ImageNet) GetSamples(sampleList []int) ([]interface{}, error) {
-	data := make([]interface{}, len(sampleList))
-	for ii, sample := range sampleList {
-		if val, ok := i.dataInMemory[sample]; ok {
-			data[ii] = val
-		} else {
+func (i *ImageNet) GetSamples(sampleList []int) (map[int]interface{}, error) {
+	for _, sample := range sampleList {
+		if _, exist := i.dataInMemory[sample]; !exist {
 			return nil, fmt.Errorf("sample id %d not loaded.", sample)
 		}
 	}
-	return data, nil
+	return i.dataInMemory, nil
 }
 
 func (i *ImageNet) getItemLocation(sample int) string {
