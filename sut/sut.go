@@ -161,6 +161,11 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 	}, nil
 }
 
+func (s *SUT) GetModelManifest() (dl.ModelManifest, error) {
+  _, modelManifest, err := s.predictor.Info()
+  return modelManifest, err
+}
+
 func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
 	return s.predictor.GetPreprocessOptions()
 }

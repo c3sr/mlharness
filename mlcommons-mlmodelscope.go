@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+  "runtime"
 
 	"github.com/c3sr/go-python3"
 	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
@@ -90,6 +91,34 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	tracer.SetLevel(tracer.NO_TRACE)
 
+  modelManifest, err := mlmodelscopeSUT.GetModelManifest()
+  if err != nil {
+		return 0, err
+	}
+
+  if modelManifest.GetBeforePreprocess() != "" {
+    runtime.LockOSThread()
+    pyState := python3.PyGILState_Ensure()
+    python3.PyRun_SimpleString(modelManifest.GetBeforePreprocess())
+    pyMain := python3.PyImport_AddModule("__main__")
+	  pyDict := python3.PyModule_GetDict(pyMain)
+	  pyBeforePreprocess := python3.PyDict_GetItemString(pyDict, "before_preprocess")
+    pyBeforePreprocess.CallFunctionObjArgs().DecRef()
+    python3.PyGILState_Release(pyState)
+    runtime.UnlockOSThread()
+  }
+  if modelManifest.GetBeforePostprocess() != "" {
+    runtime.LockOSThread()
+    pyState := python3.PyGILState_Ensure()
+    python3.PyRun_SimpleString(modelManifest.GetBeforePostprocess())
+    pyMain := python3.PyImport_AddModule("__main__")
+	  pyDict := python3.PyModule_GetDict(pyMain)
+	  pyBeforePostprocess := python3.PyDict_GetItemString(pyDict, "before_postprocess")
+    pyBeforePostprocess.CallFunctionObjArgs().DecRef()
+    python3.PyGILState_Release(pyState)
+    runtime.UnlockOSThread()
+  }
+
 	if err := warmup(); err != nil {
 		return 0, err
 	}
@@ -166,6 +195,34 @@ func InfoModels(backendName string) error {
 
 // This needs to be called once from the python side in the end
 func Finalize() error {
+  modelManifest, err := mlmodelscopeSUT.GetModelManifest()
+  if err != nil {
+		return err
+	}
+
+  if modelManifest.GetAfterPreprocess() != "" {
+    runtime.LockOSThread()
+    pyState := python3.PyGILState_Ensure()
+    python3.PyRun_SimpleString(modelManifest.GetAfterPreprocess())
+    pyMain := python3.PyImport_AddModule("__main__")
+	  pyDict := python3.PyModule_GetDict(pyMain)
+	  pyAfterPreprocess := python3.PyDict_GetItemString(pyDict, "after_preprocess")
+    pyAfterPreprocess.CallFunctionObjArgs().DecRef()
+    python3.PyGILState_Release(pyState)
+    runtime.UnlockOSThread()
+  }
+  if modelManifest.GetAfterPostprocess() != "" {
+    runtime.LockOSThread()
+    pyState := python3.PyGILState_Ensure()
+    python3.PyRun_SimpleString(modelManifest.GetAfterPostprocess())
+    pyMain := python3.PyImport_AddModule("__main__")
+	  pyDict := python3.PyModule_GetDict(pyMain)
+	  pyAfterPostprocess := python3.PyDict_GetItemString(pyDict, "after_postprocess")
+    pyAfterPostprocess.CallFunctionObjArgs().DecRef()
+    python3.PyGILState_Release(pyState)
+    runtime.UnlockOSThread()
+  }
+
 	mlmodelscopeSUT.Close()
 	rootSpan.Finish()
 	tracer.Close()
