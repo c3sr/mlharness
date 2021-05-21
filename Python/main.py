@@ -97,6 +97,9 @@ def get_args():
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, default="NO_TRACE", help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="version of the model used in MLModelScope")
     parser.add_argument("--info-models", action="store_true", help="list the models under the specified backend")
+    # Modality Specific
+    # inv_map for object detection
+    parser.add_argument("--use-inv-map", action="store_true", help="use inv_map for object detection")
 
     args = parser.parse_args()
 
@@ -390,7 +393,10 @@ def main():
         accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
         data_dir = os.environ['DATA_DIR']
         if args.dataset == 'coco':
-            subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
+            if args.use_inv_map:
+                subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {} --use-inv-map'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
+            else:
+                subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
         else:   # imagenet
             subprocess.check_call('python3 {} --mlperf-accuracy-file {} --imagenet-val-file {}'.format(accuracy_script_path, accuracy_file_path, os.path.join(data_dir, 'val_map.txt')), shell=True)
 
