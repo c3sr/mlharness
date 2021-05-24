@@ -18,7 +18,7 @@ require (
 	github.com/c3sr/nvidia-smi v1.0.0
 	github.com/c3sr/onnxruntime v1.0.2-0.20210502215125-fbf4e43dff0b
 	github.com/c3sr/pipeline v1.0.0
-	github.com/c3sr/pytorch v1.1.3
+	github.com/c3sr/pytorch v1.1.4
 	github.com/c3sr/tensorflow v1.0.1
 	github.com/c3sr/tracer v1.0.0
 	github.com/olekukonko/tablewriter v0.0.5
