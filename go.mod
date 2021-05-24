@@ -11,13 +11,14 @@ replace (
 
 require (
 	github.com/c3sr/config v1.0.1
-	github.com/c3sr/dlframework v1.1.3
+	github.com/c3sr/dlframework v1.3.2
+	github.com/c3sr/go-python3 v0.0.0-20210424014611-ae173b2e6908
 	github.com/c3sr/logger v1.0.1
 	github.com/c3sr/mxnet v1.0.0
 	github.com/c3sr/nvidia-smi v1.0.0
-	github.com/c3sr/onnxruntime v1.0.0
+	github.com/c3sr/onnxruntime v1.0.2-0.20210502215125-fbf4e43dff0b
 	github.com/c3sr/pipeline v1.0.0
-	github.com/c3sr/pytorch v1.0.0
+	github.com/c3sr/pytorch v1.1.4
 	github.com/c3sr/tensorflow v1.0.1
 	github.com/c3sr/tracer v1.0.0
 	github.com/olekukonko/tablewriter v0.0.5

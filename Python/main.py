@@ -54,7 +54,7 @@ BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=['coco', 'imagenet'], help="dataset")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad'], help="dataset")
     parser.add_argument("--dataset-list", help="path to the dataset list")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
@@ -97,6 +97,9 @@ def get_args():
     parser.add_argument("--trace-level", choices=TRACE_LEVEL, default="NO_TRACE", help="MLModelScope Trace Level")
     parser.add_argument("--model-version", help="version of the model used in MLModelScope")
     parser.add_argument("--info-models", action="store_true", help="list the models under the specified backend")
+    # Modality Specific
+    # inv_map for object detection
+    parser.add_argument("--use-inv-map", action="store_true", help="use inv_map for object detection")
 
     args = parser.parse_args()
 
@@ -147,8 +150,8 @@ def go_initialize(dataset, dataset_list, backend, model_name, model_version, cou
     trace_level = trace_level.encode('utf-8')
 
     ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
-                                                c_char_p(dataset), c_char_p(dataset_list),
-                                                c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
+                                             c_char_p(dataset), c_char_p(dataset_list),
+                                             c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
     count, err = parse_ret_msg(ret_msg.decode('utf-8'))
     return count, err
 
@@ -385,15 +388,28 @@ def main():
 
     if args.accuracy:
         accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
-                        'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py')}
+                        'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py'),
+                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py')}
         accuracy_script_path = accuracy_script_paths[args.dataset]
         accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
         data_dir = os.environ['DATA_DIR']
         if args.dataset == 'coco':
-            subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
-        else:   # imagenet
+            if args.use_inv_map:
+                subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {} --use-inv-map'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
+            else:
+                subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
+        elif args.dataset == 'imagenet':   # imagenet
             subprocess.check_call('python3 {} --mlperf-accuracy-file {} --imagenet-val-file {}'.format(accuracy_script_path, accuracy_file_path, os.path.join(data_dir, 'val_map.txt')), shell=True)
-    # runner.finish()
+        elif args.dataset == 'squad':   # squad
+            vocab_path = os.path.join(data_dir, 'vocab.txt')
+            val_path = os.path.join(data_dir, 'dev-v1.1.json')
+            out_path = os.path.join(log_dir, 'predictions.json')
+            cache_path = os.path.join(data_dir, 'eval_features.pickle')
+            subprocess.check_call('python3 {} --vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
+            format(accuracy_script_path, vocab_path, val_path, accuracy_file_path, out_path, cache_path, count), shell=True)
+        else:
+            raise RuntimeError('Dataset not Implemented.')
+
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
 

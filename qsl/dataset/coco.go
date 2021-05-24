@@ -1,7 +1,6 @@
 package dataset
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,21 +20,23 @@ type Coco struct {
 	dataPath          string
 	dataInMemory      map[int]interface{}
 	preprocessOptions common.PreprocessOptions
+	preprocessMethod  string
 }
 
-func NewCoco(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*Coco, error) {
+func NewCoco(dataPath string, dataList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*Coco, error) {
 
 	start := time.Now()
 
 	res := &Coco{
 		dataPath:          dataPath,
 		preprocessOptions: preprocessOptions,
+		preprocessMethod:  preprocessMethod,
 	}
 
-	if imageList == "" {
-		imageList = filepath.Join(dataPath, "annotations/instances_val2017.json")
+	if dataList == "" {
+		dataList = filepath.Join(dataPath, "annotations/instances_val2017.json")
 	}
-	file, err := os.Open(imageList)
+	file, err := os.Open(dataList)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func NewCoco(dataPath string, imageList string, count int, preprocessOptions com
 		fmt.Printf("reduced image list, %d images not found.\n", notFound)
 	}
 
-	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.names), elapsed.Seconds())
+	fmt.Printf("found %d images, took %.1f seconds.\n", len(res.names), elapsed.Seconds())
 
 	return res, nil
 }
@@ -114,17 +115,11 @@ func (c *Coco) LoadQuerySamples(sampleList []int) error {
 	input := make(chan interface{}, defaultChannelBuffer)
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
-		Then(steps.NewReadImage(c.preprocessOptions)).
-		Then(steps.NewPreprocessImage(c.preprocessOptions)).
+		Then(steps.NewPreprocessGeneral(c.preprocessOptions, c.preprocessMethod)).
 		Run(input)
 
 	for _, sample := range sampleList {
-		imageBytes, err := ioutil.ReadFile(c.getItemLocation(sample))
-		if err != nil {
-			return fmt.Errorf("Cannot read %s", c.getItemLocation(sample))
-		}
-
-		input <- bytes.NewBuffer(imageBytes)
+		input <- c.getItemLocation(sample)
 	}
 
 	close(input)
@@ -153,16 +148,13 @@ func (c *Coco) GetItemCount() int {
 	return len(c.labels)
 }
 
-func (c *Coco) GetSamples(sampleList []int) ([]interface{}, error) {
-	data := make([]interface{}, len(sampleList))
-	for ii, sample := range sampleList {
-		if val, ok := c.dataInMemory[sample]; ok {
-			data[ii] = val
-		} else {
+func (c *Coco) GetSamples(sampleList []int) (map[int]interface{}, error) {
+	for _, sample := range sampleList {
+		if _, exist := c.dataInMemory[sample]; !exist {
 			return nil, fmt.Errorf("sample id %d not loaded.", sample)
 		}
 	}
-	return data, nil
+	return c.dataInMemory, nil
 }
 
 func (c *Coco) getItemLocation(sample int) string {

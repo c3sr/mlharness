@@ -12,16 +12,16 @@ import (
 	"github.com/c3sr/dlframework/framework/options"
 	common "github.com/c3sr/dlframework/framework/predictor"
 	"github.com/c3sr/dlframework/steps"
-	"github.com/c3sr/mxnet"
-	_ "github.com/c3sr/mxnet/predictor"
+	// "github.com/c3sr/mxnet"
+	// _ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
-	"github.com/c3sr/onnxruntime"
-	_ "github.com/c3sr/onnxruntime/predictor"
+	// "github.com/c3sr/onnxruntime"
+	// _ "github.com/c3sr/onnxruntime/predictor"
 	"github.com/c3sr/pipeline"
 	"github.com/c3sr/pytorch"
 	_ "github.com/c3sr/pytorch/predictor"
-	"github.com/c3sr/tensorflow"
-	_ "github.com/c3sr/tensorflow/predictor"
+	// "github.com/c3sr/tensorflow"
+	// _ "github.com/c3sr/tensorflow/predictor"
 	"github.com/c3sr/tracer"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -40,9 +40,9 @@ type backend struct {
 var (
 	supportedBackend = map[string]backend{
 		"pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
-		"onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
-		"tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
-		"mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
+		// "onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
+		// "tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
+		// "mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
 	defaultChannelBuffer = 100000
 )
@@ -150,8 +150,9 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 
 	fmt.Printf("Successfully initialized SUT with backend/model = %s.\n", model.MustCanonicalName())
 
-	if batchSize > 128 || batchSize < 1 {
-		fmt.Printf("Batchsize = %d is not supported, default to 128.\n", batchSize)
+	if batchSize < 1 {
+		fmt.Printf("Batchsize = %d is not supported, default to 1.\n", batchSize)
+		batchSize = 1
 	}
 
 	return &SUT{
@@ -160,8 +161,22 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 	}, nil
 }
 
+func (s *SUT) GetModelManifest() (dl.ModelManifest, error) {
+	_, modelManifest, err := s.predictor.Info()
+	return modelManifest, err
+}
+
 func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
 	return s.predictor.GetPreprocessOptions()
+}
+
+func (s *SUT) GetPreprocessMethod() (string, error) {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "", fmt.Errorf("Unable to get preprocess method")
+	}
+
+	return modelManifest.GetPreprocess(), nil
 }
 
 func (s *SUT) Close() {
@@ -199,55 +214,147 @@ func InfoModels(backendName string) error {
 	return nil
 }
 
-func (s *SUT) ProcessQuery(ctx context.Context, data []interface{}, sampleList []int) string {
+func (s *SUT) imageClassification(ctx context.Context, data map[int]interface{}, sampleList []int) string {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
 	input := make(chan interface{}, defaultChannelBuffer)
+
 	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
-		Then(steps.NewPredict(s.predictor)).
+		Then(steps.NewPredictGeneral(s.predictor, modelManifest.GetPostprocess())).
 		Run(input)
 
-	imageParts := dl.Partition(data, s.batchSize)
-	res := make([]dl.Features, len(data))
+	resSlice := make([][]float32, len(sampleList))
 
-	for i, d := range imageParts {
-
-		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(len(d))
-
-		input <- d
-		for j := 0; j < len(d); j++ {
+	for st := 0; st < len(sampleList); st += s.batchSize {
+		ed := st + s.batchSize
+		if ed > len(sampleList) {
+			ed = len(sampleList)
+		}
+		cur := make([]interface{}, ed-st)
+		for i := 0; i < len(cur); i++ {
+			cur[i] = data[sampleList[st+i]]
+		}
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(ed - st)
+		input <- cur
+		for j := 0; j < ed-st; j++ {
 			out0 := <-output
 
 			out, ok := out0.(steps.IDer)
 			if !ok {
 				return "[[]]"
 			}
-			res[i*s.batchSize+j] = out.GetData().(dl.Features)
+			resSlice[st+j] = []float32{float32(out.GetData().(dl.Features)[0].GetClassification().GetIndex())}
 		}
 	}
 
 	close(input)
 
-	modelModality, _ := s.predictor.Modality()
+	resJSON, _ := json.Marshal(resSlice)
+	return string(resJSON)
+}
 
-	switch modelModality {
-	case "image_classification":
-		resSlice := make([][]float32, len(data))
-		len1001 := int32(len(res[0]) - 1000)
-		for i := 0; i < len(data); i++ {
-			resSlice[i] = []float32{float32(res[i][0].GetClassification().GetIndex() - len1001)}
+func (s *SUT) imageObjectDetection(ctx context.Context, data map[int]interface{}, sampleList []int) string {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
+	input := make(chan interface{}, defaultChannelBuffer)
+
+	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
+		Then(steps.NewPredictGeneral(s.predictor, modelManifest.GetPostprocess())).
+		Run(input)
+
+	resSlice := make([][][]float32, len(sampleList))
+
+	for st := 0; st < len(sampleList); st += s.batchSize {
+		ed := st + s.batchSize
+		if ed > len(sampleList) {
+			ed = len(sampleList)
 		}
-		resJSON, _ := json.Marshal(resSlice)
-		return string(resJSON)
-	case "image_object_detection":
-		resSlice := make([][][]float32, len(data))
-		for i := 0; i < len(data); i++ {
-			for _, f := range res[i] {
-				resSlice[i] = append(resSlice[i], []float32{float32(sampleList[i]), f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(),
+		cur := make([]interface{}, ed-st)
+		for i := 0; i < len(cur); i++ {
+			cur[i] = data[sampleList[st+i]]
+		}
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(ed - st)
+		input <- cur
+		for j := 0; j < ed-st; j++ {
+			out0 := <-output
+
+			out, ok := out0.(steps.IDer)
+			if !ok {
+				return "[[]]"
+			}
+			for _, f := range out.GetData().(dl.Features) {
+				resSlice[st+j] = append(resSlice[st+j], []float32{float32(sampleList[st+j]), f.GetBoundingBox().GetYmin(), f.GetBoundingBox().GetXmin(),
 					f.GetBoundingBox().GetYmax(), f.GetBoundingBox().GetXmax(), f.GetProbability(), float32(f.GetBoundingBox().GetIndex())})
 			}
 		}
-		resJSON, _ := json.Marshal(resSlice)
-		return string(resJSON)
 	}
 
-	return ""
+	close(input)
+
+	resJSON, _ := json.Marshal(resSlice)
+	return string(resJSON)
+}
+
+func (s *SUT) generalTask(ctx context.Context, data map[int]interface{}, sampleList []int) string {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
+	input := make(chan interface{}, defaultChannelBuffer)
+
+	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
+		Then(steps.NewPredictGeneral(s.predictor, modelManifest.GetPostprocess())).
+		Run(input)
+
+	resJSON := []byte{'['}
+
+	for st := 0; st < len(sampleList); st += s.batchSize {
+		ed := st + s.batchSize
+		if ed > len(sampleList) {
+			ed = len(sampleList)
+		}
+		cur := make([]interface{}, ed-st)
+		for i := 0; i < len(cur); i++ {
+			cur[i] = data[sampleList[st+i]]
+		}
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(ed - st)
+		input <- cur
+		for j := 0; j < ed-st; j++ {
+			out0 := <-output
+
+			out, ok := out0.(steps.IDer)
+			if !ok {
+				return "[[]]"
+			}
+			for _, f := range out.GetData().(dl.Features) {
+        resJSON = append(resJSON, f.GetText().GetData()...)
+        resJSON = append(resJSON, ',')
+			}
+		}
+	}
+
+	close(input)
+
+	resJSON[len(resJSON) - 1] = ']'
+	return string(resJSON)
+}
+
+func (s *SUT) ProcessQuery(ctx context.Context, data map[int]interface{}, sampleList []int) string {
+
+	// temporary switch based on the modality, we might want to add a feature to hold serialized data
+	// so we can run different modalities together.
+	modelModality, _ := s.predictor.Modality()
+	switch modelModality {
+	case "image_classification":
+		return s.imageClassification(ctx, data, sampleList)
+	case "image_object_detection":
+		return s.imageObjectDetection(ctx, data, sampleList)
+  default:
+    return s.generalTask(ctx, data, sampleList)
+	}
+	return "[[]]"
 }

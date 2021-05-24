@@ -2,9 +2,7 @@ package dataset
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,21 +20,23 @@ type ImageNet struct {
 	dataPath          string
 	dataInMemory      map[int]interface{}
 	preprocessOptions common.PreprocessOptions
+	preprocessMethod  string
 }
 
-func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions) (*ImageNet, error) {
+func NewImageNet(dataPath string, dataList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*ImageNet, error) {
 
 	start := time.Now()
 
 	res := &ImageNet{
 		dataPath:          dataPath,
 		preprocessOptions: preprocessOptions,
+		preprocessMethod:  preprocessMethod,
 	}
 
-	if imageList == "" {
-		imageList = filepath.Join(dataPath, "val_map.txt")
+	if dataList == "" {
+		dataList = filepath.Join(dataPath, "val_map.txt")
 	}
-	file, err := os.Open(imageList)
+	file, err := os.Open(dataList)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 		fmt.Printf("reduced image list, %d images not found.\n", notFound)
 	}
 
-	fmt.Printf("loaded %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
+	fmt.Printf("found %d images, took %.1f seconds.\n", len(res.labels), elapsed.Seconds())
 
 	return res, nil
 
@@ -93,17 +93,11 @@ func (i *ImageNet) LoadQuerySamples(sampleList []int) error {
 	input := make(chan interface{}, defaultChannelBuffer)
 	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
 	output := pipeline.New(opts...).
-		Then(steps.NewReadImage(i.preprocessOptions)).
-		Then(steps.NewPreprocessImage(i.preprocessOptions)).
+		Then(steps.NewPreprocessGeneral(i.preprocessOptions, i.preprocessMethod)).
 		Run(input)
 
 	for _, sample := range sampleList {
-		imageBytes, err := ioutil.ReadFile(i.getItemLocation(sample))
-		if err != nil {
-			return fmt.Errorf("Cannot read %s", i.getItemLocation(sample))
-		}
-
-		input <- bytes.NewBuffer(imageBytes)
+		input <- i.getItemLocation(sample)
 	}
 
 	close(input)
@@ -132,16 +126,13 @@ func (i *ImageNet) GetItemCount() int {
 	return len(i.labels)
 }
 
-func (i *ImageNet) GetSamples(sampleList []int) ([]interface{}, error) {
-	data := make([]interface{}, len(sampleList))
-	for ii, sample := range sampleList {
-		if val, ok := i.dataInMemory[sample]; ok {
-			data[ii] = val
-		} else {
+func (i *ImageNet) GetSamples(sampleList []int) (map[int]interface{}, error) {
+	for _, sample := range sampleList {
+		if _, exist := i.dataInMemory[sample]; !exist {
 			return nil, fmt.Errorf("sample id %d not loaded.", sample)
 		}
 	}
-	return data, nil
+	return i.dataInMemory, nil
 }
 
 func (i *ImageNet) getItemLocation(sample int) string {

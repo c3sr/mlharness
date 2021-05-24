@@ -11,12 +11,17 @@ import (
 )
 
 func TestQSL(t *testing.T) {
-	sut, err := sut.NewSUT(context.Background(), "pytorch", "torchvision_alexnet", "", false, "FULL_TRACE", 1)
+	sut, err := sut.NewSUT(context.Background(), "onnxruntime", "MLPerf_ResNet50_v1.5", "", false, "FULL_TRACE", 1)
 	if err != nil {
 		t.Error(err)
 	}
 
 	opt, err := sut.GetPreprocessOptions()
+	if err != nil {
+		t.Error(err)
+	}
+
+	preprocessMethod, err := sut.GetPreprocessMethod()
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,10 +74,15 @@ func TestCoco(t *testing.T) {
 		t.Error(err)
 	}
 
+	preprocessMethod, err := sut.GetPreprocessMethod()
+	if err != nil {
+		t.Error(err)
+	}
+
 	path, _ := os.Getwd()
 	path = filepath.Join(path, "dataset/_fixtures/fake_coco")
 
-	_, err = NewQSL(context.Background(), "coco", path, "", 10000, opt)
+	_, err = NewQSL(context.Background(), "coco", path, "", 10000, opt, preprocessMethod)
 	if err != nil {
 		t.Error(err)
 	}
