@@ -134,7 +134,7 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	if itemCount == -1 {
 		itemCount = dataCount
-		if itemCount > count {
+		if count != 0 && itemCount > count {
 			itemCount = count
 		}
 	}
