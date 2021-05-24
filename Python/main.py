@@ -405,7 +405,7 @@ def main():
             val_path = os.path.join(data_dir, 'dev-v1.1.json')
             out_path = os.path.join(log_dir, 'predictions.json')
             cache_path = os.path.join(data_dir, 'eval_features.pickle')
-            subprocess.check_call('python3 {} -vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
+            subprocess.check_call('python3 {} --vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
             format(accuracy_script_path, vocab_path, val_path, accuracy_file_path, out_path, cache_path, count), shell=True)
         else:
             raise RuntimeError('Dataset not Implemented.')
