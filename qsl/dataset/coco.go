@@ -23,7 +23,7 @@ type Coco struct {
 	preprocessMethod  string
 }
 
-func NewCoco(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*Coco, error) {
+func NewCoco(dataPath string, dataList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*Coco, error) {
 
 	start := time.Now()
 
@@ -33,10 +33,10 @@ func NewCoco(dataPath string, imageList string, count int, preprocessOptions com
 		preprocessMethod:  preprocessMethod,
 	}
 
-	if imageList == "" {
-		imageList = filepath.Join(dataPath, "annotations/instances_val2017.json")
+	if dataList == "" {
+		dataList = filepath.Join(dataPath, "annotations/instances_val2017.json")
 	}
-	file, err := os.Open(imageList)
+	file, err := os.Open(dataList)
 	if err != nil {
 		return nil, err
 	}

@@ -15,11 +15,11 @@ import (
 	// "github.com/c3sr/mxnet"
 	// _ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
-	"github.com/c3sr/onnxruntime"
-	_ "github.com/c3sr/onnxruntime/predictor"
+	// "github.com/c3sr/onnxruntime"
+	// _ "github.com/c3sr/onnxruntime/predictor"
 	"github.com/c3sr/pipeline"
-	// "github.com/c3sr/pytorch"
-	// _ "github.com/c3sr/pytorch/predictor"
+	"github.com/c3sr/pytorch"
+	_ "github.com/c3sr/pytorch/predictor"
 	// "github.com/c3sr/tensorflow"
 	// _ "github.com/c3sr/tensorflow/predictor"
 	"github.com/c3sr/tracer"
@@ -39,8 +39,8 @@ type backend struct {
 
 var (
 	supportedBackend = map[string]backend{
-		// "pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
-		"onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
+		"pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
+		// "onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
 		// "tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
 		// "mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
@@ -162,8 +162,8 @@ func NewSUT(ctx context.Context, backendName string, modelName string,
 }
 
 func (s *SUT) GetModelManifest() (dl.ModelManifest, error) {
-  _, modelManifest, err := s.predictor.Info()
-  return modelManifest, err
+	_, modelManifest, err := s.predictor.Info()
+	return modelManifest, err
 }
 
 func (s *SUT) GetPreprocessOptions() (common.PreprocessOptions, error) {
@@ -299,6 +299,50 @@ func (s *SUT) imageObjectDetection(ctx context.Context, data map[int]interface{}
 	return string(resJSON)
 }
 
+func (s *SUT) generalTask(ctx context.Context, data map[int]interface{}, sampleList []int) string {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
+	input := make(chan interface{}, defaultChannelBuffer)
+
+	output := pipeline.New(pipeline.Context(ctx), pipeline.ChannelBuffer(defaultChannelBuffer)).
+		Then(steps.NewPredictGeneral(s.predictor, modelManifest.GetPostprocess())).
+		Run(input)
+
+	resJSON := []byte{'['}
+
+	for st := 0; st < len(sampleList); st += s.batchSize {
+		ed := st + s.batchSize
+		if ed > len(sampleList) {
+			ed = len(sampleList)
+		}
+		cur := make([]interface{}, ed-st)
+		for i := 0; i < len(cur); i++ {
+			cur[i] = data[sampleList[st+i]]
+		}
+		reflect.ValueOf(s.predictor).Convert(reflect.TypeOf(s.predictor)).Elem().FieldByName("Options").Interface().(*options.Options).SetBatchSize(ed - st)
+		input <- cur
+		for j := 0; j < ed-st; j++ {
+			out0 := <-output
+
+			out, ok := out0.(steps.IDer)
+			if !ok {
+				return "[[]]"
+			}
+			for _, f := range out.GetData().(dl.Features) {
+        resJSON = append(resJSON, f.GetText().GetData()...)
+        resJSON = append(resJSON, ',')
+			}
+		}
+	}
+
+	close(input)
+
+	resJSON[len(resJSON) - 1] = ']'
+	return string(resJSON)
+}
+
 func (s *SUT) ProcessQuery(ctx context.Context, data map[int]interface{}, sampleList []int) string {
 
 	// temporary switch based on the modality, we might want to add a feature to hold serialized data
@@ -309,6 +353,8 @@ func (s *SUT) ProcessQuery(ctx context.Context, data map[int]interface{}, sample
 		return s.imageClassification(ctx, data, sampleList)
 	case "image_object_detection":
 		return s.imageObjectDetection(ctx, data, sampleList)
+  default:
+    return s.generalTask(ctx, data, sampleList)
 	}
 	return "[[]]"
 }

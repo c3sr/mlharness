@@ -23,7 +23,7 @@ type ImageNet struct {
 	preprocessMethod  string
 }
 
-func NewImageNet(dataPath string, imageList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*ImageNet, error) {
+func NewImageNet(dataPath string, dataList string, count int, preprocessOptions common.PreprocessOptions, preprocessMethod string) (*ImageNet, error) {
 
 	start := time.Now()
 
@@ -33,10 +33,10 @@ func NewImageNet(dataPath string, imageList string, count int, preprocessOptions
 		preprocessMethod:  preprocessMethod,
 	}
 
-	if imageList == "" {
-		imageList = filepath.Join(dataPath, "val_map.txt")
+	if dataList == "" {
+		dataList = filepath.Join(dataPath, "val_map.txt")
 	}
-	file, err := os.Open(imageList)
+	file, err := os.Open(dataList)
 	if err != nil {
 		return nil, err
 	}

@@ -54,7 +54,7 @@ BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=['coco', 'imagenet'], help="dataset")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad'], help="dataset")
     parser.add_argument("--dataset-list", help="path to the dataset list")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
@@ -388,7 +388,8 @@ def main():
 
     if args.accuracy:
         accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
-                        'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py')}
+                        'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py'),
+                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py')}
         accuracy_script_path = accuracy_script_paths[args.dataset]
         accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
         data_dir = os.environ['DATA_DIR']
@@ -397,8 +398,17 @@ def main():
                 subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {} --use-inv-map'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
             else:
                 subprocess.check_call('python3 {} --mlperf-accuracy-file {} --coco-dir {}'.format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
-        else:   # imagenet
+        elif args.dataset == 'imagenet':   # imagenet
             subprocess.check_call('python3 {} --mlperf-accuracy-file {} --imagenet-val-file {}'.format(accuracy_script_path, accuracy_file_path, os.path.join(data_dir, 'val_map.txt')), shell=True)
+        elif args.dataset == 'squad':   # squad
+            vocab_path = os.path.join(data_dir, 'vocab.txt')
+            val_path = os.path.join(data_dir, 'dev-v1.1.json')
+            out_path = os.path.join(log_dir, 'predictions.json')
+            cache_path = os.path.join(data_dir, 'eval_features.pickle')
+            subprocess.check_call('python3 {} -vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
+            format(accuracy_script_path, vocab_path, val_path, accuracy_file_path, out_path, cache_path, count), shell=True)
+        else:
+            raise RuntimeError('Dataset not Implemented.')
 
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
