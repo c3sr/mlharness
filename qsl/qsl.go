@@ -27,6 +27,8 @@ func NewQSL(ctx context.Context, datasetName string, dataPath string, dataList s
 		return dataset.NewCoco(dataPath, dataList, count, preprocessOptions, preprocessMethod)
 	case "squad":
 		return dataset.NewSQuAD(dataPath, dataList, count, preprocessOptions, preprocessMethod)
+	case "brats2019":
+		return dataset.NewBraTS2019(dataPath, dataList, count, preprocessOptions, preprocessMethod)
 	}
 
 	return nil, fmt.Errorf("%s dataset is not implemented", datasetName)

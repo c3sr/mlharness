@@ -54,7 +54,7 @@ BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad'], help="dataset")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad', 'brats2019'], help="dataset")
     parser.add_argument("--dataset-list", help="path to the dataset list")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
@@ -389,7 +389,8 @@ def main():
     if args.accuracy:
         accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
                         'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py'),
-                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py')}
+                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py'),
+                        'brats2019': os.path.realpath('../inference/vision/medical_imaging/3d-unet/accuracy-brats.py'),}
         accuracy_script_path = accuracy_script_paths[args.dataset]
         accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
         data_dir = os.environ['DATA_DIR']
@@ -407,6 +408,9 @@ def main():
             cache_path = os.path.join(data_dir, 'eval_features.pickle')
             subprocess.check_call('python3 {} --vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
             format(accuracy_script_path, vocab_path, val_path, accuracy_file_path, out_path, cache_path, count), shell=True)
+        elif args.dataset == 'brats2019':   # brats2019
+            subprocess.check_call('python3 {} --log_file {} --preprocessed_data_dir {}'.
+            format(accuracy_script_path, accuracy_file_path, data_dir), shell=True)
         else:
             raise RuntimeError('Dataset not Implemented.')
 

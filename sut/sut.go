@@ -15,8 +15,8 @@ import (
 	// "github.com/c3sr/mxnet"
 	// _ "github.com/c3sr/mxnet/predictor"
 	nvidiasmi "github.com/c3sr/nvidia-smi"
-	// "github.com/c3sr/onnxruntime"
-	// _ "github.com/c3sr/onnxruntime/predictor"
+	"github.com/c3sr/onnxruntime"
+	_ "github.com/c3sr/onnxruntime/predictor"
 	"github.com/c3sr/pipeline"
 	"github.com/c3sr/pytorch"
 	_ "github.com/c3sr/pytorch/predictor"
@@ -40,7 +40,7 @@ type backend struct {
 var (
 	supportedBackend = map[string]backend{
 		"pytorch":     {pytorch.Register, pytorch.FrameworkManifest},
-		// "onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
+		"onnxruntime": {onnxruntime.Register, onnxruntime.FrameworkManifest},
 		// "tensorflow":  {tensorflow.Register, tensorflow.FrameworkManifest},
 		// "mxnet":       {mxnet.Register, mxnet.FrameworkManifest},
 	}
@@ -331,15 +331,15 @@ func (s *SUT) generalTask(ctx context.Context, data map[int]interface{}, sampleL
 				return "[[]]"
 			}
 			for _, f := range out.GetData().(dl.Features) {
-        resJSON = append(resJSON, f.GetText().GetData()...)
-        resJSON = append(resJSON, ',')
+				resJSON = append(resJSON, f.GetText().GetData()...)
+				resJSON = append(resJSON, ',')
 			}
 		}
 	}
 
 	close(input)
 
-	resJSON[len(resJSON) - 1] = ']'
+	resJSON[len(resJSON)-1] = ']'
 	return string(resJSON)
 }
 
@@ -353,8 +353,8 @@ func (s *SUT) ProcessQuery(ctx context.Context, data map[int]interface{}, sample
 		return s.imageClassification(ctx, data, sampleList)
 	case "image_object_detection":
 		return s.imageObjectDetection(ctx, data, sampleList)
-  default:
-    return s.generalTask(ctx, data, sampleList)
+	default:
+		return s.generalTask(ctx, data, sampleList)
 	}
 	return "[[]]"
 }
