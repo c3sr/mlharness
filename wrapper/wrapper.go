@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+  "runtime"
 	"unsafe"
 
 	base "github.com/c3sr/mlharness"
@@ -16,6 +17,8 @@ import "C"
 //export Initialize
 func Initialize(cBackendName *C.char, cModelPath *C.char, cDatasetPath *C.char, cCount C.int,
 	cUseGPU C.int, cGPUID C.int, cTraceLevel *C.char, cBatchSize C.int) *C.char {
+  runtime.LockOSThread()
+  defer runtime.UnlockOSThread()
 
 	sz, err := base.Initialize(C.GoString(cBackendName), C.GoString(cModelPath), C.GoString(cDatasetPath), int(cCount),
 		int(cUseGPU) != 0, int(cGPUID), C.GoString(cTraceLevel), int(cBatchSize))
@@ -27,6 +30,8 @@ func Initialize(cBackendName *C.char, cModelPath *C.char, cDatasetPath *C.char, 
 
 //export IssueQuery
 func IssueQuery(cLen C.int, cSampleList *C.int) *C.char {
+  runtime.LockOSThread()
+  defer runtime.UnlockOSThread()
 	len := int(cLen)
 	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
 	sampleList := make([]int, len)
@@ -40,6 +45,8 @@ func IssueQuery(cLen C.int, cSampleList *C.int) *C.char {
 
 //export LoadQuerySamples
 func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
+  runtime.LockOSThread()
+  defer runtime.UnlockOSThread()
 	len := int(cLen)
 	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
 	sampleList := make([]int, len)
@@ -57,6 +64,8 @@ func LoadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
 
 //export UnloadQuerySamples
 func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
+  runtime.LockOSThread()
+  defer runtime.UnlockOSThread()
 	len := int(cLen)
 	slice := (*[1 << 30]C.int)(unsafe.Pointer(cSampleList))[:len:len]
 	sampleList := make([]int, len)
@@ -74,6 +83,8 @@ func UnloadQuerySamples(cLen C.int, cSampleList *C.int) *C.char {
 
 //export Finalize
 func Finalize() *C.char {
+  runtime.LockOSThread()
+  defer runtime.UnlockOSThread()
 	if err := base.Finalize(); err != nil {
 		return C.CString(err.Error())
 	}
