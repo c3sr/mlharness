@@ -1,0 +1,11 @@
+app:
+  name: mlharness
+  debug: true
+  verbose: true
+  tempdir: ~/data/mlharness
+tracer:
+  enabled: true
+  provider: jaeger
+  endpoints:
+    - localhost:9411
+  level: FULL_TRACE

@@ -54,17 +54,18 @@ BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad'], help="dataset")
-    parser.add_argument("--dataset-list", help="path to the dataset list")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad', 'brats2019'], help="select accuracy script for dataset")
+    parser.add_argument("--dataset_path", required = True, help="path to dataset yaml file")
     parser.add_argument("--scenario", default="SingleStream",
-                        help="mlperf benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
-    # in MLPerf the default max-batchsize value is 128, but in Onnxruntime lots of model can only support size of 1
-    parser.add_argument("--max-batchsize", type=int, default=1, help="max batch size in a single inference")
+                        help="mlcommons inference benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
+    # in MLPerf the default max-batchsize value is 128, but in Onnxruntime some models can only support size of 1
+    parser.add_argument("--max_batchsize", type=int, default=1, help="max batch size in a single inference")
     parser.add_argument("--backend", choices=BACKENDS, help="runtime to use")
-    parser.add_argument("--model-name", help="name of the MLModelScope model, ie. TorchVision_Alexnet")
+    parser.add_argument("--model_path", required = True, help="path to model yaml file")
     parser.add_argument("--qps", type=int, help="target qps")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
-    parser.add_argument("--find-peak-performance", action="store_true", help="enable finding peak performance pass")
+    parser.add_argument("--find_peak_performance", action="store_true", help="enable finding peak performance pass")
+    parser.add_argument("--model_name", default = "", help="provide model name to match configurations")
 
     # file to use mlperf rules compliant parameters
     parser.add_argument("--mlperf_conf", default="../inference/mlperf.conf", help="mlperf rules config")
@@ -73,33 +74,20 @@ def get_args():
     # log path for loadgen
     parser.add_argument("--log_dir", default='../logs')
 
-    # unused arguments from MLPerf
-    # parser.add_argument("--dataset-path", required=True, help="path to the dataset")
-    # parser.add_argument("--data-format", choices=["NCHW", "NHWC"], help="data format")
-    # parser.add_argument("--profile", choices=SUPPORTED_PROFILES.keys(), help="standard profiles")
-    # parser.add_argument("--model", required=True, help="model file")
-    # parser.add_argument("--inputs", help="model inputs")
-    # parser.add_argument("--outputs", help="model outputs")
-    # parser.add_argument("--threads", default=os.cpu_count(), type=int, help="threads")
-    # parser.add_argument("--cache", type=int, default=0, help="use cache")
-    # parser.add_argument("--output", help="test results")
-
-
     # below will override mlperf rules compliant settings - don't use for official submission
     parser.add_argument("--time", type=int, help="time to scan in seconds")
     parser.add_argument("--count", type=int, help="dataset items to use")
-    parser.add_argument("--max-latency", type=float, help="mlperf max latency in pct tile")
-    parser.add_argument("--samples-per-query", type=int, help="mlperf multi-stream sample per query")
+    parser.add_argument("--max_latency", type=float, help="mlperf max latency in pct tile")
+    parser.add_argument("--samples_per_query", type=int, help="mlperf multi-stream sample per query")
 
 
-    # MLModelScope Parameters
-    parser.add_argument("--use-gpu", type=int, default=0, help="enable gpu for inference")
-    parser.add_argument("--trace-level", choices=TRACE_LEVEL, default="NO_TRACE", help="MLModelScope Trace Level")
-    parser.add_argument("--model-version", help="version of the model used in MLModelScope")
-    parser.add_argument("--info-models", action="store_true", help="list the models under the specified backend")
+    # MLHarness Parameters
+    parser.add_argument("--use_gpu", type=int, default=0, help="enable gpu for inference")
+    parser.add_argument("--gpu_id", type=int, default=0, help="which GPU")
+    parser.add_argument("--trace_level", choices=TRACE_LEVEL, default="NO_TRACE", help="MLModelScope Trace Level")
     # Modality Specific
     # inv_map for object detection
-    parser.add_argument("--use-inv-map", action="store_true", help="use inv_map for object detection")
+    parser.add_argument("--use_inv_map", action="store_true", help="use inv_map for object detection")
 
     args = parser.parse_args()
 
@@ -125,15 +113,8 @@ def parse_ret_msg(ret_msg):
     count = int(count)
     return count, err.lstrip()
 
-def go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize):
-    # (dataset, backend, use_gpu, max_batchsize) won't be None, checked by main()
+def go_initialize(backend, model_path, dataset_path, count, use_gpu, gpu_id, trace_level, max_batchsize):
     global so
-    if dataset_list is None:
-        dataset_list = ""
-    if model_name is None:
-        model_name = ""
-    if model_version is None:
-        model_version = ""
 
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
@@ -143,15 +124,12 @@ def go_initialize(dataset, dataset_list, backend, model_name, model_version, cou
 
     # ensure encoding of all strings
     backend = backend.encode('utf-8')
-    model_name = model_name.encode('utf-8')
-    model_version = str(model_version).encode('utf-8')
-    dataset = dataset.encode('utf-8')
-    dataset_list = dataset_list.encode('utf-8')
+    model_path = model_path.encode('utf-8')
+    dataset_path = dataset_path.encode('utf-8')
     trace_level = trace_level.encode('utf-8')
 
-    ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_name), c_char_p(model_version),
-                                             c_char_p(dataset), c_char_p(dataset_list),
-                                             c_int(count), c_int(use_gpu), c_char_p(trace_level), c_int(max_batchsize)))
+    ret_msg = ctypes.string_at(so.Initialize(c_char_p(backend), c_char_p(model_path), c_char_p(dataset_path), c_int(count),
+                                             c_int(use_gpu), c_int(gpu_id), c_char_p(trace_level), c_int(max_batchsize)))
     count, err = parse_ret_msg(ret_msg.decode('utf-8'))
     return count, err
 
@@ -171,23 +149,18 @@ def go_finalize(so):
   ret_msg = so.Finalize()
   return ret_msg.decode('utf-8')
 
-def go_info_models(backend, so):
-  backend = backend.encode('utf-8')
-  ret_msg = so.InfoModels(backend)
-  return ret_msg.decode('utf-8')
-
 def load_go_shared_library():
 
     so = ctypes.cdll.LoadLibrary('../wrapper/_wrapper.so')
 
     """
     Go Function Signature
-    func Initialize(cBackendName *C.char, cModelName *C.char, cModelVersion *C.char,
-	  cDatasetName *C.char, cImageList *C.char, cCount C.int, cUseGPU C.int, cTraceLevel *C.char, cMaxBatchsize C.int) *C.char
+    func Initialize(cBackendName *C.char, cModelPath *C.char, cDatasetPath *C.char, cCount C.int,
+    cUseGPU C.int, cGPUID C.int, cTraceLevel *C.char, cBatchSize C.int) *C.char
     """
     so.Initialize.restype = c_char_p
-    so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p,
-                                c_char_p, c_int, c_int, c_char_p, c_int]
+    so.Initialize.argtypes = [c_char_p, c_char_p, c_char_p, c_int,
+                                c_int, c_int, c_char_p, c_int]
 
     """
     Have to use numpy ndarray to pass the integer list
@@ -204,13 +177,6 @@ def load_go_shared_library():
     """
     so.Finalize.restype = c_char_p
     so.Finalize.argtypes = []
-
-    """
-    Go Function Signature
-    func InfoModels(cBackendName *C.char) *C.char
-    """
-    so.InfoModels.restype = c_char_p
-    so.InfoModels.argtypes = [c_char_p]
 
     """
     Go Function Signature
@@ -242,12 +208,6 @@ def main():
     # find backend
     backend = get_backend(args.backend)
 
-    if args.info_models:
-      err = go_info_models(backend, so)
-      if (err != ''):
-        print(err)
-      return
-
     # --count applies to accuracy mode only and can be used to limit the number of images
     # for testing. For perf model we always limit count to 200.
     count_override = False
@@ -255,20 +215,13 @@ def main():
     if count:
         count_override = True
 
-    final_results = {
-        "runtime": args.model_name,
-        "version": args.model_version,
-        "time": int(time.time()),
-        "cmdline": str(args),
-    }
-
     """
     Python signature
-    go_initialize(dataset, dataset_list, backend, model_name, model_version, count, use_gpu, trace_level, max_batchsize, so)
+    go_initialize(backend, model_path, dataset_path, count, use_gpu, gpu_id, trace_level, max_batchsize)
     """
 
-    count, err = go_initialize(args.dataset, args.dataset_list, backend, args.model_name,
-                    args.model_version, args.count, args.use_gpu, args.trace_level, args.max_batchsize)
+    count, err = go_initialize(backend, args.model_path, args.dataset_path, count,
+                    args.use_gpu, args.gpu_id, args.trace_level, args.max_batchsize)
 
 
     if (err != 'nil'):
@@ -299,18 +252,32 @@ def main():
         global result_timeing
         idx = np.array([q.index for q in query_samples]).astype(np.int32)
         query_id = [q.id for q in query_samples]
-        start = time.time()
-        processed_results = so.IssueQuery(len(idx), idx)
-        result_timeing.append(time.time() - start)
-        processed_results = json.loads(processed_results.decode('utf-8'))
-        response_array_refs = []
-        response = []
-        for idx, qid in enumerate(query_id):
-            response_array = array.array("B", np.array(processed_results[idx], np.float32).tobytes())
-            response_array_refs.append(response_array)
-            bi = response_array.buffer_info()
-            response.append(lg.QuerySampleResponse(qid, bi[0], bi[1]))
-        lg.QuerySamplesComplete(response)
+        if args.dataset == 'brats2019':
+            start = time.time()
+            response_array_refs = []
+            response = []
+            for i, qid in enumerate(query_id):
+                processed_results = so.IssueQuery(1, idx[i][np.newaxis])
+                processed_results = json.loads(processed_results.decode('utf-8'))
+                response_array = array.array("B", np.array(processed_results[0], np.float16).tobytes())
+                response_array_refs.append(response_array)
+                bi = response_array.buffer_info()
+                response.append(lg.QuerySampleResponse(qid, bi[0], bi[1]))
+            result_timeing.append(time.time() - start)
+            lg.QuerySamplesComplete(response)
+        else:
+            start = time.time()
+            processed_results = so.IssueQuery(len(idx), idx)
+            result_timeing.append(time.time() - start)
+            processed_results = json.loads(processed_results.decode('utf-8'))
+            response_array_refs = []
+            response = []
+            for idx, qid in enumerate(query_id):
+                response_array = array.array("B", np.array(processed_results[idx], np.float32).tobytes())
+                response_array_refs.append(response_array)
+                bi = response_array.buffer_info()
+                response.append(lg.QuerySampleResponse(qid, bi[0], bi[1]))
+            lg.QuerySamplesComplete(response)
 
     def flush_queries():
         pass
@@ -337,8 +304,9 @@ def main():
             raise RuntimeError('unload query samples failed')
 
     settings = lg.TestSettings()
-    settings.FromConfig(mlperf_conf, args.model_name, args.scenario)
-    settings.FromConfig(user_conf, args.model_name, args.scenario)
+    if args.model_name != "":
+        settings.FromConfig(mlperf_conf, args.model_name, args.scenario)
+        settings.FromConfig(user_conf, args.model_name, args.scenario)
     settings.scenario = scenario
     settings.mode = lg.TestMode.PerformanceOnly
     if args.accuracy:
@@ -370,7 +338,6 @@ def main():
     qsl = lg.ConstructQSL(count, min(count, 500), load_query_samples, unload_query_samples)
 
     log.info("starting {}".format(scenario))
-    result_dict = {"good": 0, "total": 0, "scenario": str(scenario)}
 
     log_path = os.path.realpath(args.log_dir)
     log_output_settings = lg.LogOutputSettings()
@@ -385,11 +352,11 @@ def main():
     if not last_timeing:
         last_timeing = result_timeing
 
-
     if args.accuracy:
         accuracy_script_paths = {'coco': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-coco.py'),
                         'imagenet': os.path.realpath('../inference/vision/classification_and_detection/tools/accuracy-imagenet.py'),
-                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py')}
+                        'squad': os.path.realpath('../inference/language/bert/accuracy-squad.py'),
+                        'brats2019': os.path.realpath('../inference/vision/medical_imaging/3d-unet/accuracy-brats.py'),}
         accuracy_script_path = accuracy_script_paths[args.dataset]
         accuracy_file_path = os.path.join(log_dir, 'mlperf_log_accuracy.json')
         data_dir = os.environ['DATA_DIR']
@@ -407,6 +374,13 @@ def main():
             cache_path = os.path.join(data_dir, 'eval_features.pickle')
             subprocess.check_call('python3 {} --vocab_file {} --val_data {} --log_file {} --out_file {} --features_cache_file {} --max_examples {}'.
             format(accuracy_script_path, vocab_path, val_path, accuracy_file_path, out_path, cache_path, count), shell=True)
+        elif args.dataset == 'brats2019':   # brats2019
+            base_dir = os.path.realpath('../inference/vision/medical_imaging/3d-unet/build')
+            post_dir = os.path.join(base_dir, 'postprocessed_data')
+            label_dir = os.path.join(base_dir, 'raw_data/nnUNet_raw_data/Task043_BraTS2019/labelsTr')
+            os.makedirs(post_dir, exist_ok=True)
+            subprocess.check_call('python3 {} --log_file {} --preprocessed_data_dir {} --postprocessed_data_dir {} --label_data_dir {}'.
+            format(accuracy_script_path, accuracy_file_path, data_dir, post_dir, label_dir), shell=True)
         else:
             raise RuntimeError('Dataset not Implemented.')
 

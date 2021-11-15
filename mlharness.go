@@ -1,22 +1,23 @@
-package mlcommonsmlmomodelscope
+package mlharness
 
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
+	"strconv"
 
+	"github.com/c3sr/dldataset"
+	"github.com/c3sr/dlframework/steps"
 	"github.com/c3sr/go-python3"
-	"github.com/c3sr/mlcommons-mlmodelscope/qsl"
-	"github.com/c3sr/mlcommons-mlmodelscope/qsl/dataset"
-	"github.com/c3sr/mlcommons-mlmodelscope/sut"
+	"github.com/c3sr/mlharness/sut"
+	"github.com/c3sr/pipeline"
 	"github.com/c3sr/tracer"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
 var (
-	mlmodelscopeSUT     *sut.SUT
-	mlmodelscopeQSL     dataset.Dataset
+	mlharnessSUT        *sut.SUT
+	mlharnessDataset    *dldataset.Dataset
 	rootSpan            opentracing.Span
 	ctx                 context.Context
 	dataCount           int
@@ -30,11 +31,12 @@ var (
 		"HARDWARE_TRACE":       6,
 		"FULL_TRACE":           7,
 	}
+	defaultChannelBuffer = 100000
 )
 
-// This needs to be call once from the python side in the start
-func Initialize(backendName string, modelName string, modelVersion string,
-	datasetName string, imageList string, count int, useGPU bool, traceLevel string, batchSize int) (int, error) {
+// This needs to be call once from the python side in the beginning
+func Initialize(backendName string, modelPath string, datasetPath string, count int,
+	useGPU bool, GPUID int, traceLevel string, batchSize int) (int, error) {
 
 	// Not from shared library
 	if !python3.Py_IsInitialized() {
@@ -54,36 +56,22 @@ func Initialize(backendName string, modelName string, modelVersion string,
 	rootSpan, ctx = tracer.StartSpanFromContext(
 		context.Background(),
 		tracer.APPLICATION_TRACE,
-		"MLCommons-MLModelScope",
+		"MLHarness",
 	)
 	if rootSpan == nil {
 		panic("invalid span")
 	}
 
 	fmt.Println("Start initializing SUT...")
-
-	mlmodelscopeSUT, err = sut.NewSUT(ctx, backendName, modelName, modelVersion, useGPU, traceLevel, batchSize)
+	mlharnessSUT, err = sut.NewSUT(ctx, backendName, modelPath, useGPU, GPUID, traceLevel, batchSize)
 	if err != nil {
 		return 0, err
 	}
-
 	fmt.Println("Finish initializing SUT...")
-
-	opt, err := mlmodelscopeSUT.GetPreprocessOptions()
-	if err != nil {
-		return 0, err
-	}
-
-	preprocessMethod, err := mlmodelscopeSUT.GetPreprocessMethod()
-	if err != nil {
-		return 0, err
-	}
-
-	path := os.Getenv("DATA_DIR")
 
 	fmt.Println("Start initializing QSL...")
 
-	mlmodelscopeQSL, err = qsl.NewQSL(ctx, datasetName, path, imageList, count, opt, preprocessMethod)
+	mlharnessDataset, err := dldataset.NewDataset(datasetPath, count)
 	if err != nil {
 		return 0, err
 	}
@@ -92,7 +80,7 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	tracer.SetLevel(tracer.NO_TRACE)
 
-	modelManifest, err := mlmodelscopeSUT.GetModelManifest()
+	modelManifest, err := mlharnessSUT.GetModelManifest()
 	if err != nil {
 		return 0, err
 	}
@@ -130,45 +118,54 @@ func Initialize(backendName string, modelName string, modelVersion string,
 
 	tracer.SetLevel(tracer.LevelFromName(traceLevel))
 
-	itemCount := mlmodelscopeQSL.GetItemCount()
-
-	if itemCount == -1 {
-		itemCount = dataCount
-		if itemCount > count {
-			itemCount = count
-		}
-	}
-
-	return itemCount, nil
+	return mlharnessDataset.Count(), nil
 }
 
 func warmup() error {
-	wamupSpan, issueCtx := tracer.StartSpanFromContext(
+	warmupSpan, issueCtx := tracer.StartSpanFromContext(
 		ctx,
 		tracer.APPLICATION_TRACE,
 		"Warmup Span",
 	)
-	if wamupSpan == nil {
+	if warmupSpan == nil {
 		panic("invalid issue query span")
 	}
-	defer wamupSpan.Finish()
+	defer warmupSpan.Finish()
 
 	fmt.Println("Start warmup...")
 
-	if err := LoadQuerySamples([]int{0}); err != nil {
+	if err := mlharnessDataset.Load([]int{0}); err != nil {
 		return err
 	}
 
-	data, err := mlmodelscopeQSL.GetSamples([]int{0})
+	input := make(chan interface{}, defaultChannelBuffer)
+	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
+
+	preProcessMethod, err := mlharnessSUT.GetPreprocessMethod()
 	if err != nil {
 		return err
 	}
 
-	for ii := 0; ii < 5; ii++ {
-		mlmodelscopeSUT.ProcessQuery(issueCtx, data, []int{0})
+	output := pipeline.New(opts...).
+		Then(steps.NewPreprocessGeneral(preProcessMethod)).
+		Run(input)
+
+	tensors := make(map[int]interface{})
+	input <- strconv.Itoa(0)
+	close(input)
+
+	for out := range output {
+		if err, ok := out.(error); ok {
+			return err
+		}
+		tensors[0] = out
 	}
 
-	if err := UnloadQuerySamples([]int{}); err != nil {
+	for i := 0; i < 5; i++ {
+		mlharnessSUT.ProcessQuery(issueCtx, tensors, []int{0})
+	}
+
+	if err := mlharnessDataset.Unload([]int{}); err != nil {
 		return err
 	}
 
@@ -187,29 +184,55 @@ func IssueQuery(sampleList []int) string {
 	}
 	defer issueSpan.Finish()
 
-	data, err := mlmodelscopeQSL.GetSamples(sampleList)
+	data, err := mlharnessDataset.GetAll()
 	if err != nil {
 		return "[[]]"
 	}
 
-	return mlmodelscopeSUT.ProcessQuery(issueCtx, data, sampleList)
+	return mlharnessSUT.ProcessQuery(issueCtx, data, sampleList)
 }
 
 func LoadQuerySamples(sampleList []int) error {
-	return mlmodelscopeQSL.LoadQuerySamples(sampleList)
+	if err := mlharnessDataset.Load(sampleList); err != nil {
+		return err
+	}
+
+	input := make(chan interface{}, defaultChannelBuffer)
+	opts := []pipeline.Option{pipeline.ChannelBuffer(defaultChannelBuffer)}
+
+	preProcessMethod, err := mlharnessSUT.GetPreprocessMethod()
+	if err != nil {
+		return err
+	}
+
+	output := pipeline.New(opts...).
+		Then(steps.NewPreprocessGeneral(preProcessMethod)).
+		Run(input)
+
+	tensors := make(map[int]interface{})
+	for _, sample := range sampleList {
+		input <- strconv.Itoa(sample)
+	}
+	close(input)
+	idx := 0
+	for out := range output {
+		if err, ok := out.(error); ok {
+			return err
+		}
+		tensors[sampleList[idx]] = out
+		idx++
+	}
+
+	return mlharnessDataset.Set(tensors)
 }
 
 func UnloadQuerySamples(sampleList []int) error {
-	return mlmodelscopeQSL.UnloadQuerySamples(sampleList)
-}
-
-func InfoModels(backendName string) error {
-	return sut.InfoModels(backendName)
+	return mlharnessDataset.Unload(sampleList)
 }
 
 // This needs to be called once from the python side in the end
 func Finalize() error {
-	modelManifest, err := mlmodelscopeSUT.GetModelManifest()
+	modelManifest, err := mlharnessSUT.GetModelManifest()
 	if err != nil {
 		return err
 	}
@@ -237,7 +260,7 @@ func Finalize() error {
 		runtime.UnlockOSThread()
 	}
 
-	mlmodelscopeSUT.Close()
+	mlharnessSUT.Close()
 	rootSpan.Finish()
 	tracer.Close()
 
