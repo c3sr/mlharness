@@ -15,11 +15,11 @@ To get started, choose a configuration from the table below that fits best to yo
 
 | System | ONNX Runtime v1.7.1 | MXNet v1.8.0 | PyTorch v1.8.1 | TensorFlow v1.14.0 | 
 | :---: | :---: | :---: | :--: | :--: |
-| CPU Only | `c3sr/mlharness:amd64-cpu-onnxruntime1.7.1-latest` |  | `c3sr/mlharness:amd64-cpu-pytorch1.8.1-latest` | `c3sr/mlharness:amd64-cpu-tensorflow1.14.0-latest` |
-| GPU with CUDA 10.0 | <center>—</center> |  | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.0-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.0-latest` |
-| GPU with CUDA 10.1 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda10.1-latest` |  | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.1-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.1-latest` |
-| GPU with CUDA 10.2 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda10.2-latest` |  | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.2-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.2-latest` |
-| GPU with CUDA 11.0 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.0-latest` | `docker pull c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda11.0-latest` | `docker pull c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.0-latest` | <center>—</center> |
-| GPU with CUDA 11.1 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.1-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda11.1-latest`  | `docker pull c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.1-latest`  | <center>—</center> |
-| GPU with CUDA 11.2 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest` |  | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.2-latest` | <center>—</center> |
+| CPU Only | `c3sr/mlharness:amd64-cpu-onnxruntime1.7.1-latest` | `c3sr/mlharness:amd64-cpu-mxnet1.8.0-latest` | `c3sr/mlharness:amd64-cpu-pytorch1.8.1-latest` | `c3sr/mlharness:amd64-cpu-tensorflow1.14.0-latest` |
+| GPU with CUDA 10.0 | <center>—</center> | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda10.0-latest` | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.0-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.0-latest` |
+| GPU with CUDA 10.1 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda10.1-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda10.1-latest` | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.1-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.1-latest` |
+| GPU with CUDA 10.2 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda10.2-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda10.2-latest` | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda10.2-latest` | `c3sr/mlharness:amd64-gpu-tensorflow1.14.0-cuda10.2-latest` |
+| GPU with CUDA 11.0 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.0-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda11.0-latest` | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.0-latest` | <center>—</center> |
+| GPU with CUDA 11.1 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.1-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda11.1-latest`  | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.1-latest`  | <center>—</center> |
+| GPU with CUDA 11.2 | `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest` | `c3sr/mlharness:amd64-gpu-mxnet1.8.0-cuda11.2-latest` | `c3sr/mlharness:amd64-gpu-pytorch1.8.1-cuda11.2-latest` | <center>—</center> |
 
