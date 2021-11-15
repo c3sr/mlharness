@@ -1,4 +1,4 @@
-package mlcommonsmlmomodelscope
+package mlharness
 
 import (
 	"github.com/c3sr/config"
@@ -12,10 +12,10 @@ var (
 
 func init() {
 	config.AfterInit(func() {
-		log = logger.New().WithField("pkg", "mlcommonsmlmomodelscope")
+		log = logger.New().WithField("pkg", "mlharness")
 	})
 	config.Init(
-		config.AppName("mlcommons-mlmodelscope"),
+		config.AppName("mlharness"),
 		config.DebugMode(true),
 		config.VerboseMode(true),
 	)

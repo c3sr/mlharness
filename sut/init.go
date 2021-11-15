@@ -12,6 +12,6 @@ var (
 
 func init() {
 	config.AfterInit(func() {
-		log = logger.New().WithField("pkg", "mlcommons-mlmodelscope/sut")
+		log = logger.New().WithField("pkg", "mlharness/sut")
 	})
 }
