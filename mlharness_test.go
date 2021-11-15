@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	_ "github.com/c3sr/tracer/jaeger"
+	_ "github.com/c3sr/tracer/all"
 )
 
 func TestImageNet(t *testing.T) {
