@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"strings"
 
 	dl "github.com/c3sr/dlframework"
 	"github.com/c3sr/dlframework/framework/agent"
