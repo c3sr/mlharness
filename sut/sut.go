@@ -260,8 +260,11 @@ func (s *SUT) generalTask(ctx context.Context, data map[int]interface{}, sampleL
 }
 
 func (s *SUT) ProcessQuery(ctx context.Context, data map[int]interface{}, sampleList []int) string {
-	modelModality, _ := s.predictor.Modality()
-	switch modelModality {
+	_, modelManifest, err := s.predictor.Info()
+	if err != nil {
+		return "[[]]"
+	}
+	switch strings.ToLower(modelManifest.GetModality()) {
 	case "image_object_detection":
 		return s.imageObjectDetection(ctx, data, sampleList)
 	default:
