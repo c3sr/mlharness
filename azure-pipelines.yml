@@ -2,6 +2,56 @@ variables:
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
 
 jobs:
+  - job: CPU_ORT_1_7_1
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 make docker_build_cpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 ./push.sh docker_push_cpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_ORT_1_7_1_CUDA101
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=10.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=10.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_ORT_1_7_1_CUDA102
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=10.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=10.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_ORT_1_7_1_CUDA110
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_ORT_1_7_1_CUDA111
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
   - job: GPU_ORT_1_7_1_CUDA112
     timeoutInMinutes: 0
     steps:
@@ -10,5 +60,185 @@ jobs:
       - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.2 make docker_build_gpu
         workingDirectory: dockerfiles
       - script: FRAMEWORK_NAME=onnxruntime FRAMEWORK_VERSION=1.7.1 CUDA_VERSION=11.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: CPU_PYTORCH_1_8_1
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 make docker_build_cpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 ./push.sh docker_push_cpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA100
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA101
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA102
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=10.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA110
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA111
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_PYTORCH_1_8_1_CUDA112
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=pytorch FRAMEWORK_VERSION=1.8.1 CUDA_VERSION=11.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: CPU_MXNET_1_8_0
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 make docker_build_cpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 ./push.sh docker_push_cpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA100
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA101
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA102
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=10.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA110
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA111
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_MXNET_1_8_0_CUDA112
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=mxnet FRAMEWORK_VERSION=1.8.0 CUDA_VERSION=11.2 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: CPU_TF_1_14_0
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 make docker_build_cpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 ./push.sh docker_push_cpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_TF_1_14_0_CUDA100
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.0 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.0 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_TF_1_14_0_CUDA101
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.1 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.1 ./push.sh docker_push_gpu
+        workingDirectory: dockerfiles
+        condition: eq(variables.isMain, true)
+  - job: GPU_TF_1_14_0_CUDA102
+    timeoutInMinutes: 0
+    steps:
+      - script: docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+        condition: eq(variables.isMain, true)
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.2 make docker_build_gpu
+        workingDirectory: dockerfiles
+      - script: FRAMEWORK_NAME=tensorflow FRAMEWORK_VERSION=1.14.0 CUDA_VERSION=10.2 ./push.sh docker_push_gpu
         workingDirectory: dockerfiles
         condition: eq(variables.isMain, true)

@@ -1,4 +1,4 @@
-FROM c3sr/onnxruntime-agent:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest
+FROM c3sr/tensorflow-agent:amd64-gpu-tensorflow1.14.0-cuda10.1-latest
 
 ENV PKG github.com/c3sr/mlharness
 WORKDIR /c3sr/mlharness
@@ -16,7 +16,9 @@ RUN cd inference/loadgen && \
     pip3 install --force-reinstall dist/mlperf_loadgen-0.5a0-cp36-cp36m-linux_x86_64.whl && \
     python3 demos/py_demo_single_stream.py
 
-RUN cd wrapper && go build -tags=onnxruntime -buildmode=c-shared -o _wrapper.so
+RUN go get github.com/c3sr/go-cupti@cuda10
+
+RUN cd wrapper && go build -tags=tensorflow -buildmode=c-shared -o _wrapper.so
 
 WORKDIR /c3sr/mlharness/Python
 
