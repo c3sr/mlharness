@@ -16,7 +16,15 @@ RUN cd inference/loadgen && \
     pip3 install --force-reinstall dist/mlperf_loadgen-0.5a0-cp36-cp36m-linux_x86_64.whl && \
     python3 demos/py_demo_single_stream.py
 
+# Setup Path
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64/stubs
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64:${FRAMEWORKS_DIR}/mxnet/lib
+
 RUN cd wrapper && go build -tags=mxnet -buildmode=c-shared -o _wrapper.so
+
+# Remove cuda/lib64/stubs from LD_LIBRARY_PATH since it's for building purpose
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64:${FRAMEWORKS_DIR}/mxnet/lib
 
 WORKDIR /c3sr/mlharness/Python
 
