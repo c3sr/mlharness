@@ -171,6 +171,8 @@ github.com/c3sr/dldataset v0.0.0-20211114224851-8db5b79de012 h1:UT/2T/q/fqwNmjTc
 github.com/c3sr/dldataset v0.0.0-20211114224851-8db5b79de012/go.mod h1:tg0Ij8taRxby6z8xQ/tFaElyie78OytgMr4vat1g8/Y=
 github.com/c3sr/dldataset v1.0.0 h1:y5+D6Smbp34058pkEyfJSHjwTxUwrQujtSjekXdZBr0=
 github.com/c3sr/dldataset v1.0.0/go.mod h1:tg0Ij8taRxby6z8xQ/tFaElyie78OytgMr4vat1g8/Y=
+github.com/c3sr/dldataset v1.0.1 h1:kajcDj2JfT6OWTVoYuegM8/Gi2yKiwu8nREVjnbEado=
+github.com/c3sr/dldataset v1.0.1/go.mod h1:tg0Ij8taRxby6z8xQ/tFaElyie78OytgMr4vat1g8/Y=
 github.com/c3sr/dlframework v1.4.0/go.mod h1:qNE8ZB3jTyFSTSJoWDgXhLVD4Rc8T0GKCkWGFnVEyEY=
 github.com/c3sr/dlframework v1.4.2/go.mod h1:IMQ6UDENSc1uV/5VkJQ16ymQwLC8Za75NdTX3OiIt5I=
 github.com/c3sr/dlframework v1.4.4 h1:Ecq89DHIVLEodX65RohWdaz73cKJwKh3RCECa2/uRJI=
@@ -179,6 +181,8 @@ github.com/c3sr/dlmodel v0.0.0-20211115044206-a45aaa263cd5 h1:4uXYATjp5RKrXvxdXb
 github.com/c3sr/dlmodel v0.0.0-20211115044206-a45aaa263cd5/go.mod h1:GlHbtIvJxrn7XeYxTFbJiC5JtN4jyS3HsujKtxiIABw=
 github.com/c3sr/dlmodel v1.0.0 h1:gbucH5rQtSE0aODH7nuoy+y3UgKSpG3T+LOeKdAkLBI=
 github.com/c3sr/dlmodel v1.0.0/go.mod h1:GlHbtIvJxrn7XeYxTFbJiC5JtN4jyS3HsujKtxiIABw=
+github.com/c3sr/dlmodel v1.0.1 h1:wVegL1pkYBEi8LmZGtqgZaPHtG0FqX6ncnDo5yCuCSw=
+github.com/c3sr/dlmodel v1.0.1/go.mod h1:GlHbtIvJxrn7XeYxTFbJiC5JtN4jyS3HsujKtxiIABw=
 github.com/c3sr/downloadmanager v1.0.0 h1:iyrfSy4k8N514LyW/IPhmt1M3lC6tSRB5VX9Dv18g1k=
 github.com/c3sr/downloadmanager v1.0.0/go.mod h1:YqQ+Ps7QIjsu0vZ5DQekJfsZ5ferSd1r4Rr4wG6RmwI=
 github.com/c3sr/go-cupti v1.1.1 h1:nG9rjk3GF0OrrFPND4KvIbZVPYZedfu/EXnHtmrWVD0=

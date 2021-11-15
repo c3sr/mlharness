@@ -71,7 +71,7 @@ func Initialize(backendName string, modelPath string, datasetPath string, count 
 
 	fmt.Println("Start initializing QSL...")
 
-	mlharnessDataset, err := dldataset.NewDataset(datasetPath, count)
+	mlharnessDataset, err = dldataset.NewDataset(datasetPath, count)
 	if err != nil {
 		return 0, err
 	}

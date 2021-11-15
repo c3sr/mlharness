@@ -54,13 +54,13 @@ BACKENDS = ("pytorch", "onnxruntime", "tensorflow", "mxnet")
 def get_args():
     """Parse commandline."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad', 'brats2019'], help="select accuracy script for dataset")
+    parser.add_argument("--dataset", choices=['coco', 'imagenet', 'squad', 'brats2019'], required = True, help="select accuracy script for dataset")
     parser.add_argument("--dataset_path", required = True, help="path to dataset yaml file")
     parser.add_argument("--scenario", default="SingleStream",
                         help="mlcommons inference benchmark scenario, one of " + str(list(SCENARIO_MAP.keys())))
     # in MLPerf the default max-batchsize value is 128, but in Onnxruntime some models can only support size of 1
     parser.add_argument("--max_batchsize", type=int, default=1, help="max batch size in a single inference")
-    parser.add_argument("--backend", choices=BACKENDS, help="runtime to use")
+    parser.add_argument("--backend", choices=BACKENDS, required = True, help="runtime to use")
     parser.add_argument("--model_path", required = True, help="path to model yaml file")
     parser.add_argument("--qps", type=int, help="target qps")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
