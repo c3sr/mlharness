@@ -58,7 +58,7 @@ docker run --rm \
   --dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml \
   --backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml \
   --use_gpu 1 --gpu_id $GPUID \
-  --accuracy --count=10 \
+  --accuracy --count 10 \
   --scenario Offline
 ```
 The description follows:
@@ -71,7 +71,7 @@ The description follows:
 - `--dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml`: The dataset and the path to the dataset manifest file in the mounted directory.
 - `--backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml`: The backend and the path to the model manifest file in the mounted directory.
 - `--use_gpu 1 --gpu_id $GPUID`: Let MLHarness know that we want to use GPU in the program. Please replace `$GPUID` with the GPU ID you want to use.
-- `--accuracy --count=10`: Generate MLCommons Inference reports in accuracy mode, and only run 10 samples for simplicity.
+- `--accuracy --count 10`: Generate MLCommons Inference reports in accuracy mode, and only run 10 samples for simplicity.
 - `--scenario Offline`: Scenario for MLCommons Inference.
 
 After the execution, we are supposed to get `{"exact_match": 70.0, "f1": 70.0}` as the result for the first 10 samples.
