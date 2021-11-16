@@ -9,7 +9,7 @@ MLHarness is a scalable benchmarking harness system for MLCommons Inference with
 Please see the [MLHarness Paper](https://arxiv.org/abs/2111.05231) for detailed descriptions and case studies that demonstrate the unique value of MLHarness.
 
 ### Tutorial
-The easiest way to use MLHarness is through the [pre-built docker images](https://hub.docker.com/r/c3sr/mlharness). Instructions for installing docker can be found at [docker's guiding documents](https://docs.docker.com/get-docker/).
+The easiest way to use MLHarness is through the [pre-built docker images](https://hub.docker.com/r/c3sr/mlharness/tags). Instructions for installing docker can be found at [docker's guiding documents](https://docs.docker.com/get-docker/).
 
 To get started, choose a configuration from the table below that fits best to your system.
 
@@ -67,7 +67,7 @@ The description follows:
 - `--env DATA_DIR=/root/data/SQuAD`: Set environment variable to the dataset directory we downloaded.
 - `--gpus device=$GPUID`: Expose GPU to docker, please replace `$GPUID` with the GPU ID you want to use.
 - `--shm-size 1g --ulimit memlock=-1 --ulimit stack=67108864 --privileged=true --network host`: Configure resources in docker container.
-- `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest`: The [pre-build docker image](https://hub.docker.com/r/c3sr/mlharness) we choose above.
+- `c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest`: The [pre-build docker image](https://hub.docker.com/r/c3sr/mlharness/tags) we choose above.
 - `--dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml`: The dataset and the path to the dataset manifest file in the mounted directory.
 - `--backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml`: The backend and the path to the model manifest file in the mounted directory.
 - `--use_gpu 1 --gpu_id $GPUID`: Let MLHarness know that we want to use GPU in the program. Please replace `$GPUID` with the GPU ID you want to use.
