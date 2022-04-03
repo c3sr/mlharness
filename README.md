@@ -58,8 +58,8 @@ docker run --rm \
   --dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml \
   --backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml \
   --use_gpu 1 --gpu_id $GPUID \
-  --accuracy --count 10 \
-  --scenario Offline
+  --scenario Offline \
+  --accuracy --count 10
 ```
 The description follows:
 - `docker run --rm`: Run MLHarness as a docker container, remove it after execution.
@@ -71,8 +71,8 @@ The description follows:
 - `--dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml`: The dataset and the path to the dataset manifest file in the mounted directory.
 - `--backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml`: The backend and the path to the model manifest file in the mounted directory.
 - `--use_gpu 1 --gpu_id $GPUID`: Let MLHarness know that we want to use GPU in the program. Please replace `$GPUID` with the GPU ID you want to use.
-- `--accuracy --count 10`: Generate MLCommons Inference reports in accuracy mode, and only run 10 samples for simplicity.
 - `--scenario Offline`: Scenario for MLCommons Inference.
+- `--accuracy --count 10`: Generate MLCommons Inference reports in accuracy mode, and only run 10 samples for simplicity.
 
 After the execution, we are supposed to get `{"exact_match": 70.0, "f1": 70.0}` as the result for the first 10 samples.
 
@@ -84,9 +84,22 @@ MLHarness also provides tracing information across software and hardware stacks.
 docker run -d -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 -p5775:5775/udp -p6831:6831/udp -p6832:6832/udp \
   -p5778:5778 -p16686:16686 -p14268:14268 -p9411:9411 jaegertracing/all-in-one:1.21.0
 ```
-And choose one of `--trace_level` from `{NO_TRACE,APPLICATION_TRACE,MODEL_TRACE,FRAMEWORK_TRACE,ML_LIBRARY_TRACE,SYSTEM_LIBRARY_TRACE,HARDWARE_TRACE,FULL_TRACE}` when running experiments.
+Once the [jaeger](http://jaeger.readthedocs.io/en/latest/getting_started/) service is up, we can enable MLHarness to collect traces by specifying `--trace_level` in one of `{NO_TRACE,APPLICATION_TRACE,MODEL_TRACE,FRAMEWORK_TRACE,ML_LIBRARY_TRACE,SYSTEM_LIBRARY_TRACE,HARDWARE_TRACE,FULL_TRACE}` when running experiments. Note that there is a limit on the number of traces that can be recorded, hence please also limit your sample size using `--count` when collecting traces in MLHarness. An example run is as follow, where we specify both `--count` and `--trace_level` in the last line:
+```
+docker run --rm \
+  -v ~/data:/root/data \
+  --env DATA_DIR=/root/data/SQuAD \
+  --gpus device=$GPUID \
+  --shm-size 1g --ulimit memlock=-1 --ulimit stack=67108864 --privileged=true --network host \
+  c3sr/mlharness:amd64-gpu-onnxruntime1.7.1-cuda11.2-latest \
+  --dataset squad --dataset_path /root/data/dldataset/datasets/squad.yml \
+  --backend onnxruntime --model_path /root/data/dlmodel/models/language/onnxruntime/BERT.yml \
+  --use_gpu 1 --gpu_id $GPUID \
+  --scenario Offline \
+  --accuracy --count 10 --trace_level FULL_TRACE
+```
 
-The tracing information can be found at port 16686. Note that there is a limit on the number of traces that can be recorded, hence please also limit your sample size using `--count`.
+The tracing information can be found at port 16686. 
 
 ### Customization
 Aside from using the manifests we already have, we can also create and contribute our manifests, by replacing the corresponding fields in the manifests. Examples of model manifests can be found at [dlmodel/models](https://github.com/c3sr/dlmodel/tree/master/models) and examples of dataset manifests can be found at [dldataset/datasets](https://github.com/c3sr/dldataset/tree/master/datasets). Note that dataset manifest and model manifest share the same python interpreter hence global python variables can be used between two manifests. Some detailed descriptions are as follow:
